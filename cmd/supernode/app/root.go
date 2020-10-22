@@ -352,12 +352,25 @@ func decodeWithYAML(types ...reflect.Type) mapstructure.DecodeHookFunc {
 
 // initLog initializes log Level and log format.
 func initLog(logger *logrus.Logger, logPath string, logConfig dflog.LogConfig) error {
-	logFilePath := filepath.Join(supernodeViper.GetString("base.homeDir"), "logs", logPath)
-
+	logFilePath := logConfig.Path
+	if logFilePath == "" {
+		logFilePath = filepath.Join(supernodeViper.GetString("base.homeDir"), "logs", logPath)
+	}
 	opts := []dflog.Option{
-		dflog.WithLogFile(logFilePath, logConfig.MaxSize, logConfig.MaxBackups),
 		dflog.WithSign(fmt.Sprintf("%d", os.Getpid())),
 		dflog.WithDebug(supernodeViper.GetBool("base.debug")),
+	}
+
+	if logFilePath == "/dev/stdout" {
+		opts = append([]dflog.Option{
+			dflog.WithConsole(),
+		},
+			opts...)
+	} else {
+		opts = append([]dflog.Option{
+			dflog.WithLogFile(logFilePath, logConfig.MaxSize, logConfig.MaxBackups),
+		},
+			opts...)
 	}
 
 	logrus.Debugf("use log file %s", logFilePath)
