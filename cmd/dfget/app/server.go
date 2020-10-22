@@ -65,9 +65,26 @@ func initServerFlags() {
 }
 
 func runServer() error {
+	// get config from property files
+	propResults, err := initProperties()
+	if err != nil {
+		return err
+	}
+
 	if err := initServerLog(); err != nil {
 		return err
 	}
+
+	// TODO: make the result print of initproperties elegant.
+	// print property load result
+	for _, propRst := range propResults {
+		if propRst.err != nil {
+			logrus.Debugf("initProperties[%s] fail: %v", propRst.fileName, propRst.err)
+			continue
+		}
+		logrus.Debugf("initProperties[%s] success: %v", propRst.fileName, propRst.prop)
+	}
+
 	// launch a peer server as a uploader server
 	port, err := uploader.LaunchPeerServer(cfg)
 	if err != nil {

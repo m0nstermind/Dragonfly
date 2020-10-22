@@ -163,6 +163,8 @@ func initProperties() ([]*propertiesResult, error) {
 		cfg.ClientQueueSize = properties.ClientQueueSize
 	}
 
+	cfg.LogConfig = properties.LogConfig
+
 	currentUser, err := user.Current()
 	if err != nil {
 		printer.Println(fmt.Sprintf("get user error: %s", err))
