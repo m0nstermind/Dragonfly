@@ -16,15 +16,34 @@
 set -o nounset
 set -o errexit
 set -o pipefail
+set -x
 
 export INSTALL_HOME=/opt/dragonfly
 export INSTALL_CLIENT_PATH=df-client
 export INSTALL_SUPERNODE_PATH=df-supernode
+
+# odkl rpm configuration
+export RPM_CONFIG_HOME=/etc/dragonfly
+export RPM_SYSCONFIG_PATH=/etc/sysconfig/dragonfly
+export RPM_SYSTEMD_HOME=/usr/lib/systemd/system
+export RPM_NAME=${RPM_NAME:-"df-client"}
+# /odkl rpm configuration
+
 export GO_SOURCE_EXCLUDES=( \
     "test" \
 )
 
-GOOS=$(go env GOOS)
-GOARCH=$(go env GOARCH)
+USE_DOCKER=${USE_DOCKER:-"0"}
+BUILD_IMAGE=golang:1.13.15
+
+if [[ "1" == "${USE_DOCKER}" ]]
+then
+	GOOS=$(docker run --rm ${BUILD_IMAGE} go env GOOS | tr -dc '[:print:]' )
+	GOARCH=$(docker run --rm ${BUILD_IMAGE} go env GOARCH | tr -dc '[:print:]' )
+else
+	GOOS=$(go env GOOS)
+	GOARCH=$(go env GOARCH)
+fi
+echo "GOOS=${GOOS}, GOPARCH=${GOARCH}"
 export GOOS
 export GOARCH

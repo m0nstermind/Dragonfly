@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+    <info organisation="ru.odnoklassniki"
+          module="dragonfly"
+          >
+          <description>
+	  Dragonfly content distribution for one-cloud
+          </description>
+    </info>
+    <configurations>
+        <conf name="el7.rpm" visibility="public"
+              description="centos 7 rpm for use in development"/>
+
+    </configurations>
+
+    <publications>
+        <artifact name="dragonfly-daemon" type="rpm" ext="el7.x86_64.rpm" conf="el7.rpm" />
+    </publications>
+    
+    <dependencies/>
+</ivy-module>

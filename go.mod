@@ -7,6 +7,7 @@ require (
 	github.com/PuerkitoBio/purell v0.0.0-20170829232023-f619812e3caf // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20170903095215-73945b6115bf // indirect
+	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/cpuguy83/go-md2man v1.0.7 // indirect
 	github.com/emirpasic/gods v1.12.0
 	github.com/go-check/check v0.0.0-20161208181325-20d25e280405

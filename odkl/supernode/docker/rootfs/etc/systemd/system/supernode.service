@@ -1,0 +1,14 @@
+[Unit]
+Description=Dragonfly Supernode server
+Documentation=https://jira.odkl.ru/browse/OL-89032
+Wants=network-online.target
+After=network-online.target
+After=rsyslog.service
+After=confp-init.service
+
+[Service]
+ExecStart=/opt/dragonfly/server/supernode --advertise-ip ${cloud_lan} --config /etc/dragonfly/supernode.yml
+SyslogFacility=local4
+
+[Install]
+WantedBy=multi-user.target

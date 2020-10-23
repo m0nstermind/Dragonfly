@@ -1,0 +1,246 @@
+<?xml version="1.0"?>
+
+
+<project name="dragonfly" default="core" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:if="ant:if" xmlns:unless="ant:unless">
+
+	<!-- ============================================================================ -->
+	<!-- Global definition -->
+	<!-- ============================================================================ -->
+
+	<!-- path to root -->
+	<property name="root.dir" value="${basedir}" />
+	<property name="build.dir" value="build" />
+	<property name="bin.dir" value="${root.dir}/bin/linux_amd64"/>
+    <property name="build.scripts" value="${root.dir}/build-scripts"/>
+
+	<!-- local.properties имеют высший приоритет -->
+	<property file="${root.dir}/local.properties" />
+
+	<!-- проперти для деплоймент целей -->
+	<property file="${user.home}/one/${ant.project.name}.properties" />
+
+	<property file="${root.dir}/build.number" prefix="ok."/>
+
+	<exec executable="git" outputproperty="git.tag">
+		<arg line="rev-list --tags --max-count=1" />
+	</exec>
+	<exec executable="git" outputproperty="git.version">
+		<arg line="describe --tags ${git.tag}" />
+	</exec>
+
+	<property name="rpm.release" value="ok${ok.build.number.build}"/>
+
+	<!-- override build.number properties for common ant targets to work properly -->
+	<loadresource property="build.number.major">
+		<string value="${git.version}"/>
+		<filterchain>
+			<tokenfilter>
+				<replaceregex pattern="v(\w+)\.(\w+)\.(\w+)" replace="\1"/>
+			</tokenfilter>
+		</filterchain>
+	</loadresource>
+
+	<loadresource property="rpm.version">
+		<string value="${git.version}"/>
+		<filterchain>
+			<tokenfilter>
+				<replaceregex pattern="v(.+)" replace="\1"/>
+			</tokenfilter>
+		</filterchain>
+	</loadresource>
+
+	<loadresource property="build.number.minor">
+		<string value="${git.version}"/>
+		<filterchain>
+			<tokenfilter>
+				<replaceregex pattern="(\w+)\.(\w+)\.(\w+)" replace="\2"/>
+			</tokenfilter>
+		</filterchain>
+	</loadresource>
+
+	<loadresource property="build.number.build">
+		<string value="${git.version}"/>
+		<filterchain>
+			<tokenfilter>
+				<replaceregex pattern="(\w+)\.(\w+)\.(\w+)" replace="\3-${rpm.release}"/>
+			</tokenfilter>
+		</filterchain>
+	</loadresource>
+
+	<property name="docker.templates.dir" value="${root.dir}/odkl/supernode/docker"/>
+	<property name="docker.dir" value="${docker.templates.dir}/rootfs"/>
+	<property name="docker.image" value="${ant.project.name}-supernode"/>
+	<property name="docker.image.base" value="centos7-base:stable"/>
+
+	<!-- include common ant targets -->
+	<import file="../one-deploy/build/common-targets.xml"/>
+
+	<!--
+		dragonfly client programs ( dfdaemon and dfget ) are packed to rpm
+		while server ( supernode ) - to one-cloud docker image
+	-->
+	<property name="rpm.name" value="dragonfly-daemon"/>
+	<property name="rpm.file" value="${root.dir}/release/${rpm.name}-${build.number.str}.el7.x86_64.rpm"/>
+
+
+	<!-- override git clone to not use shared references - they will not work under docker -->
+    <macrodef name="git-clone">
+        <attribute name="repository" />
+        <attribute name="dest" />
+        <sequential>
+            <git command="clone">
+                <arg value="@{repository}" />
+                <arg value="@{dest}" />
+            </git>
+        </sequential>
+    </macrodef>
+
+	<!-- ============================================================================ -->
+	<!-- Initialize -->
+	<!-- ============================================================================ -->
+
+
+	<target name="init">
+		<echo message="build.compiler = ${build.compiler}" />
+		<echo message="user.home = ${user.home}" />
+		<echo message="ant.home = ${ant.home}" />
+		<echo message="rpm.version = ${rpm.version}" />
+		<echo message="rpm.release = ${rpm.release}" />
+		<echo message="build.number = ${build.number.str}" />
+
+	</target>
+
+	<target name="clean" description="Removes the build directory">
+		<fail unless="build" message="${build} directory must be set before invoking this target"/>
+		<mkdir dir="${build}"/>
+		<chmod dir="${build}" perm="+w" includes="**/*" type="dir"  maxparallel="100" />
+		<antcall target="make-clean"/>
+		<delete dir="${build}"/>
+		<delete dir="${root.dir}" includes="*.src.rpm" />
+	</target>
+
+	<target name="make" >
+		<echo>... calling make ${make.cmd}</echo>
+		<exec executable="make" dir="${root.dir}">
+			<env key="USE_DOCKER" value="1"/>
+			<env key="RPM_NAME" value="${rpm.name}"/>
+			<env key="RPM_VERSION" value="${rpm.version}"/>
+			<env key="RPM_RELEASE" value="${rpm.release}"/>
+			<env key="VERSION" value="v${build.number.str}"/>
+			<arg line="${make.cmd}" />
+		</exec>
+	</target>
+
+	<target name="build" depends="init" description="Compile and build Draginfly binaries only">
+		<property name="banner.title" value="Development building '${ant.project.name} ${build.number.str}'." />
+		<antcall target="banner" />
+
+		<antcall target="make">
+			<param name="make.cmd" value="build"/>
+		</antcall>
+
+	</target>
+
+	<target name="bnd"  description="Build and copy to one-cloud/build/tmp/vagrant">
+		<property name="artifact" value="${root.dir}/bin/podman"/>
+		<copy todir="${root.dir}/../one-cloud/build/tmp/work" file="${artifact}"/>
+	</target>
+
+	<target name="rpm" depends="init" description="Build rpms">
+		<echo>Building rpms in ${build.tmp}</echo>
+
+		<antcall target="make">
+			<param name="make.cmd" value="rpm"/>
+		</antcall>
+
+	</target>
+
+	<target name="make-clean" depends="init">
+		<echo>Calling make clean: ${build.tmp}</echo>
+
+		<antcall target="make">
+			<param name="make.cmd" value="clean"/>
+		</antcall>
+	</target>
+
+    <target name="ivy-prepare-for-publish" if="ivy.enabled">
+    	<move file="${rpm.file}" todir="${build.components}"/>
+    </target>
+
+	<!-- overwritten here to avoid creation of /one/image dir - supernode is not java app -->
+	<target name="docker-prepare" depends="docker-init" if="docker.enabled" >
+		<property name="build.docker" value="${build.tmp}/docker"/>
+		<property name="build.docker.rootfs" value="${build.docker}/rootfs"/>
+
+		<property name="docker.templates.dir" value="${one.projects.dir}/one-deploy/build/templates/docker"/>
+
+		<fail message="Undefined image tag." unless="docker.tag"/>
+
+		<delete dir="${build.docker}" includes="**/*"/>
+
+		<copy todir="${build.docker.rootfs}" >
+			<fileset dir="${docker.dir}" includes="**/*"/>
+		</copy>
+		<chmod perm="+x" file="${build.docker.rootfs}/docker/build"/>
+
+		<copy todir="${build.docker.rootfs}/opt/dragonfly/server" >
+			<fileset dir="${bin.dir}" includes="supernode"/>
+		</copy>
+
+		<copy overwrite='true' todir='${build.docker}'>
+			<fileset dir="${docker.templates.dir}" includes="Dockerfile"/>
+			<globmapper from='*' to='*'/>
+			<filterset>
+				<filter token='docker.repo' value='${docker.repo}'/>
+				<filter token='docker.image.base' value='${docker.image.base}'/>
+			</filterset>
+		</copy>
+
+		<propertyfile file="${build.docker}/environment" >
+			<entry key="docker_image" value="${docker.image}"/>
+			<entry key="docker_tag" value="${docker.tag}"/>
+			<entry key="docker_repo" value="${docker.repo}"/>
+		</propertyfile>
+
+	</target>
+
+	<!-- ============================================================================ -->
+	<!-- MANDATORY TASK -->
+	<!-- Build package release with dependecies -->
+	<!-- ============================================================================ -->
+	<target name="build-release" depends="clean,build,rpm"/>
+	<target name="prepare-release" depends="build-release"/>
+	<!--
+	<target name="package-release">
+        <antcall target="info">
+            <param name="info.msg" value="Package '${ant.project.name} ${build.number.str}' release."/>
+        </antcall>
+
+      	<antcall target="prepare-release"/>
+
+    </target>
+    -->
+
+    <target name="export-release" depends="ivy-publish"
+            description="Uploads assembled zip file and Ivy artifacts to repository">
+		<antcall target="info">
+			<param name="info.msg" value="Export package '${ant.project.name} ${build.number.str}' release to repository."/>
+		</antcall>
+
+		<antcall target="docker-export" >
+			<param name="docker.tag" value="${build.number.str}"/>
+		</antcall>
+
+	</target>
+
+	<!-- ============================================================================ -->
+	<!-- MANDATORY TASK -->
+	<!-- Deploy package release -->
+	<!-- ============================================================================ -->
+	<target name="deploy-release">
+		<fail message="Use yum to deploy this package rpm" />
+	</target>
+
+	<target name="core" depends="project-instructions" />
+
+</project>

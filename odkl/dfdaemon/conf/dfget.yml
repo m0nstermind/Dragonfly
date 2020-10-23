@@ -1,0 +1,37 @@
+# This is default configuration of dfget for Odnoklassniki
+# Values could be overriden from command line
+
+# Nodes specify supernodes.
+# Where the host is necessary, the port(default: 8002) and the weight(default:1) are optional.
+---
+nodes:
+   - 127.0.0.1=1
+
+# LocalLimit rate limit about a single download task, format: G(B)/g/M(B)/m/K(B)/k/B
+# pure number will also be parsed as Byte.
+localLimit: 0
+
+# Minimal rate about a single download task, format: G(B)/g/M(B)/m/K(B)/k/B
+# pure number will also be parsed as Byte.
+minRate: 10MB
+
+# TotalLimit rate limit about the whole host includes download and upload, format: G(B)/g/M(B)/m/K(B)/k/B
+# pure number will also be parsed as Byte.
+#
+# Suppose that there are two tasks on the same host
+#  and the `localLimit` for each task is 20MB.
+#  The actual download speed limit for each task will be 10MB when the `totalLimit` is 20MB.
+totalLimit: 0
+
+# ClientQueueSize is the size of client queue
+# which controls the number of pieces that can be processed simultaneously.
+# It is only useful when the Pattern equals "source".
+# The default value is 6.
+clientQueueSize: 6
+
+workHome: /var/lib/containers/dragonfly
+
+# Logging
+logConfig:
+   # Log file path
+   path: /var/log/dragonfly-download

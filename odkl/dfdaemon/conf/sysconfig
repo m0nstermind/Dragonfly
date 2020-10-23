@@ -1,0 +1,10 @@
+# This file is placed by rpm to /etc/sysconfig/dragonfly
+# It is used in dragonfly.service to build command line of dfdaemon
+# The detailed configuration of dfdaemon and dfget can be found under /etc/dragonfly/
+
+# --node strings       specify the addresses(host:port) of supernodes that will be passed to dfget.
+SUPERNODES=supernode.dragonfly.devcloud.odkl.ru:5002
+# --port uint          dfdaemon will listen the port (default 65001) for podman pull requests
+PORT=5001
+# --peerPort uint peerserver will listen the port ( serving other dragonfly peers download requests )
+PEERPORT=15001

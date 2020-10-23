@@ -6,6 +6,8 @@ set -o pipefail
 
 USE_DOCKER=${USE_DOCKER:-"0"}
 VERSION=${VERSION:-"0.0.$(date +%s)"}
+RPM_VERSION=${RPM_VERSION:-$VERSION}
+RPM_RELEASE=${RPM_RELEASE:-"1"}
 
 curDir=$(cd "$(dirname "$0")" && pwd)
 cd "${curDir}" || return
@@ -17,6 +19,8 @@ BUILD_PATH=bin/${GOOS}_${GOARCH}
 DFDAEMON_BINARY_NAME=dfdaemon
 DFGET_BINARY_NAME=dfget
 
+ODKL_DFD_PATH=odkl/${DFDAEMON_BINARY_NAME}
+
 main() {
     cd "${BUILD_SOURCE_HOME}" || return
     # Maybe we should use a variable to set the directory for release,
@@ -27,7 +31,7 @@ main() {
     if [ "1" == "${USE_DOCKER}" ]
     then
         echo "Begin to package with docker."
-        FPM="docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) inoc603/fpm:alpine"
+        FPM="docker run --rm -v $(pwd):$(pwd) -w $(pwd) inoc603/fpm:alpine"
     else
         echo "Begin to package in local environment."
         FPM="fpm"
@@ -58,8 +62,17 @@ build_rpm() {
         --maintainer "${MAINTAINER}" \
         --after-install ./hack/after-install.sh \
         --before-remove ./hack/before-remove.sh \
-        -n df-client -v "${VERSION}" \
+        --after-remove ./hack/after-remove.sh \
+        -n ${RPM_NAME} -v "${RPM_VERSION}" \
+        --iteration ${RPM_RELEASE} \
+        --rpm-dist el7 \
+        --config-files ${RPM_CONFIG_HOME}/dfdaemon.yml \
+        --config-files ${RPM_SYSCONFIG_PATH} \
 	"${BUILD_PATH}/${DFGET_BINARY_NAME}=${INSTALL_HOME}/${INSTALL_CLIENT_PATH}/${DFGET_BINARY_NAME}" \
+	"${ODKL_DFD_PATH}/conf/dfdaemon.yml=${RPM_CONFIG_HOME}/dfdaemon.yml" \
+	"${ODKL_DFD_PATH}/conf/dfget.yml=${RPM_CONFIG_HOME}/dfget.yml" \
+	"${ODKL_DFD_PATH}/conf/sysconfig=${RPM_SYSCONFIG_PATH}" \
+	"${ODKL_DFD_PATH}/systemd/dragonfly.service=${RPM_SYSTEMD_HOME}/dragonfly.service" \
 	"${BUILD_PATH}/${DFDAEMON_BINARY_NAME}=${INSTALL_HOME}/${INSTALL_CLIENT_PATH}/${DFDAEMON_BINARY_NAME}"
 }
 

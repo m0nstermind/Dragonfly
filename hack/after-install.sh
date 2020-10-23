@@ -6,3 +6,6 @@ set -o pipefail
 
 ln -s /opt/dragonfly/df-client/dfget /usr/local/bin/dfget
 ln -s /opt/dragonfly/df-client/dfdaemon /usr/local/bin/dfdaemon
+
+/usr/bin/systemctl daemon-reload
+/usr/bin/systemctl enable dragonfly

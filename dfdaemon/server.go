@@ -20,7 +20,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
+	"os"
 
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/config"
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/handler"
@@ -29,6 +31,7 @@ import (
 	"github.com/dragonflyoss/Dragonfly/dfget/core/uploader"
 	"github.com/dragonflyoss/Dragonfly/version"
 
+	systemd "github.com/coreos/go-systemd/daemon"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -135,17 +138,55 @@ func (s *Server) Start() error {
 	var err error
 	_ = proxy.WithDirectHandler(handler.New())(s.proxy)
 	s.server.Handler = s.proxy
+
 	if s.server.TLSConfig != nil {
 		logrus.Infof("start dfdaemon https server on %s", s.server.Addr)
-		err = s.server.ListenAndServeTLS("", "")
+
+		addr := s.server.Addr
+		if addr == "" {
+			addr = ":https"
+		}
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			return err
+		}
+
+		SdNotify(systemd.SdNotifyReady)
+
+		err = s.server.ServeTLS(ln, "", "")
 	} else {
 		logrus.Infof("start dfdaemon http server on %s", s.server.Addr)
-		err = s.server.ListenAndServe()
+
+		addr := s.server.Addr
+		if addr == "" {
+			addr = ":http"
+		}
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			return err
+		}
+
+		SdNotify(systemd.SdNotifyReady)
+
+		err = s.server.Serve(ln)
 	}
 	return err
 }
 
+func SdNotify(state string) {
+	notified, errNotify := systemd.SdNotify(false, state)
+	if errNotify != nil {
+		logrus.Infof("systemd notification failed %s", errNotify)
+	} else if notified {
+		logrus.Infof("notified systemd as %s", state)
+	} else {
+		logrus.Infof("systemd is not notified to %s by either reason", os.Getenv("NOTIFY_SOCKET"))
+	}
+}
+
+
 // Stop gracefully stops the dfdaemon http server.
 func (s *Server) Stop(ctx context.Context) error {
+	SdNotify(systemd.SdNotifyStopping)
 	return s.server.Shutdown(ctx)
 }

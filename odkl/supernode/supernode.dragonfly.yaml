@@ -1,0 +1,15 @@
+type: service
+name: supernode
+queue: dragonfly.registry.idle
+image: dragonfly-supernode:1.0.6-ok1
+alloc:
+  mem: 100m
+ports:
+  '5002': 'lan,tcp,started'
+mounts:
+  home: '/mnt/supernode'
+volumes:
+  home:
+    type: hdd
+    size: 1G
+

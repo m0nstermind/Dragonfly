@@ -1,0 +1,35 @@
+# see http://0pointer.de/public/systemd-man/systemd.service.html
+[Unit]
+Description=Dragonfly daemon for cloud registry
+Documentation=https://wiki.odkl.ru/display/dev/OneCloud+-+miniond+layout+and+configuration
+After=network.target
+
+[Service]
+Type=notify
+TimeoutSec=2
+PIDFile=/var/lib/containers/dragonfly/dragonfly.pid
+EnvironmentFile=-/etc/sysconfig/dragonfly
+ExecStart=/opt/dragonfly/df-client/dfdaemon --node "$SUPERNODES" --port $PORT --peerPort $PEERPORT --verbose
+Restart=on-failure
+RestartSec=30
+# starting the dragonfly daemon with BATCH CPU sched priority, so it does not affect latency sensitive cloud tasks running on the same minion
+CPUSchedulingPolicy=batch
+Nice=19
+# This is neccessary for metrics collection about minion itself
+CPUAccounting=yes
+MemoryAccounting=yes
+BlockIOAccounting=yes
+#collect pids usage for minion (doesn't work in current systemd+kernel combination)
+#TasksAccounting=yes
+
+# Not less than 10% from normal running task (1024 by deafult)
+CPUShares=1024
+# Not less than 1% of blk io (1000 is the default)
+BlockIOWeight=10
+#ProtectSystem=full
+MemoryLimit=1024M
+#Limit number of pids minion could use (doesn't work in current systemd+kernel combination)
+#TasksMax=20000
+
+[Install]
+WantedBy=multi-user.target
