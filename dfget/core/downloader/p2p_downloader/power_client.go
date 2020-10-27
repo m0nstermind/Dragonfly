@@ -90,9 +90,9 @@ func (pc *PowerClient) Run() error {
 	content, err := pc.downloadPiece()
 
 	timeDuring := time.Since(startTime).Seconds()
-	logrus.Debugf("client range:%s cost:%.3f from peer:%s:%d, readCost:%.3f, length:%d",
+	logrus.Debugf("client range:%s cost:%.3f from peer:%s:%d, readCost:%.3f, length:%d, speed:%.3fMB/s",
 		pc.pieceTask.Range, timeDuring, pc.pieceTask.PeerIP, pc.pieceTask.PeerPort,
-		pc.readCost.Seconds(), pc.total)
+		pc.readCost.Seconds(), pc.total, float64( pc.total )/timeDuring/1024/1024)
 
 	if err != nil {
 		logrus.Errorf("failed to read piece cont(%s) from dst:%s:%d, wait 20 ms: %v",

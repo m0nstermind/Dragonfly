@@ -144,7 +144,7 @@ func (rl *RateLimiter) blocking(requiredToken int64) {
 // For NewRateLimiter, the production of rate should be division by 1000.
 func TransRate(rate int64) int64 {
 	if rate <= 0 {
-		rate = 10 * 1024 * 1024
+		return 0
 	}
 	rate = (rate/1000 + 1) * 1000
 	return rate

@@ -124,8 +124,8 @@ func (suite *RateLimiterSuite) TestTransRate(c *check.C) {
 		{666, 1000},
 		{2048, 3000},
 		{123456, 124000},
-		{0, 10486000},
-		{-233, 10486000},
+		{0, 0},
+		{-233, 0},
 	}
 	for _, cc := range cases {
 		v := TransRate(cc.r)
