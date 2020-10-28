@@ -2,9 +2,14 @@
 # It is used in dragonfly.service to build command line of dfdaemon
 # The detailed configuration of dfdaemon and dfget can be found under /etc/dragonfly/
 
-# --node strings       specify the addresses(host:port) of supernodes that will be passed to dfget.
-SUPERNODES=supernode.dragonfly.devcloud.odkl.ru:5002
+# IP Address local peer must advertise to other peers on network. Must be accessible by containers and other minions
+# try to auto detect, if empty ( works BAAD )
+IP=""
 # --port uint          dfdaemon will listen the port (default 65001) for podman pull requests
 PORT=5001
-# --peerPort uint peerserver will listen the port ( serving other dragonfly peers download requests )
+# --peerPort uint peerserver will listen the port ( serving other dragonfly peers download requests ); must be >15000
 PEERPORT=15001
+# --node strings       specify the addresses(host:port) of supernodes that will be passed to dfget.
+SUPERNODES=supernode.dragonfly.devcloud.odkl.ru:5002
+# Idling alive duration with no accessing by any upload requests. After this idle period dfdaemon will automatically exit
+IDLE_TIME="5m"
