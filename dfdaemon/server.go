@@ -23,6 +23,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/config"
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/handler"
@@ -120,16 +121,34 @@ func NewFromConfig(cfg config.Properties) (*Server, error) {
 	return New(opts...)
 }
 
-func LaunchPeerServer(cfg config.Properties) error {
+func (s *Server) shutdownOnPeerServerExit() {
+
+	logrus.Debugf("waiting for peer server shutdown")
+	uploader.WaitForShutdown()
+	logrus.Debugf("peer server is down; exiting dfdaemon")
+
+	c, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute))
+	if err := s.Stop(c); err != nil {
+		logrus.Warnf("error while stopping %s", err)
+	}
+	cancel()
+
+	os.Exit(0)
+}
+
+func LaunchPeerServer(s *Server, cfg config.Properties) error {
 	peerServerConfig := dfgetConfig.NewConfig()
 	peerServerConfig.RV.LocalIP = cfg.LocalIP
 	peerServerConfig.RV.PeerPort = cfg.PeerPort
-	peerServerConfig.RV.ServerAliveTime = 0
-	port, err := uploader.LaunchPeerServer(peerServerConfig)
+	peerServerConfig.RV.ServerAliveTime = cfg.StreamAliveTime
+	port,  err := uploader.LaunchPeerServer(peerServerConfig)
 	if err != nil {
 		return err
 	}
+
 	peerServerConfig.RV.PeerPort = port
+
+	go s.shutdownOnPeerServerExit()
 	return nil
 }
 

@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/constant"
 	"github.com/dragonflyoss/Dragonfly/pkg/dflog"
@@ -114,6 +115,10 @@ type Properties struct {
 	LocalIP    string          `yaml:"localIP" json:"localIP"`
 	PeerPort   int             `yaml:"peerPort" json:"peerPort"`
 	StreamMode bool            `yaml:"streamMode" json:"streamMode"`
+	// StreamAliveTime specifies the alive duration for which
+	// peer server keeps no accessing by any uploading requests.
+	// After this period, the dfdaemon will automatically exit.
+	StreamAliveTime time.Duration `yaml:"streamAliveTime" json:"streamAliveTime"`
 }
 
 // Validate validates the config

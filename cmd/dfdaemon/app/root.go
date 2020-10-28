@@ -18,6 +18,7 @@ package app
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,7 +75,7 @@ var rootCmd = &cobra.Command{
 		}
 		// if stream mode, launch peer server in dfdaemon progress
 		if cfg.StreamMode {
-			go dfdaemon.LaunchPeerServer(*cfg)
+			go dfdaemon.LaunchPeerServer(s,*cfg)
 		}
 		return s.Start()
 	},
@@ -97,8 +98,11 @@ func init() {
 	// http server config
 	rf.String("hostIp", "127.0.0.1", "dfdaemon host ip, default: 127.0.0.1")
 	rf.Uint("port", 65001, "dfdaemon will listen the port")
+	rf.String("localIp", "", "peer local ip, default: autodetect")
 	rf.Uint("peerPort", 0, "peerserver will listen the port")
 	rf.Bool("streamMode", false, "dfdaemon will run in stream mode")
+	rf.Duration("streamAliveTime", 0,
+		"alive duration for which streamMode no accessing by any uploading requests, after this period dfdaemon will automatically exit")
 	rf.String("certpem", "", "cert.pem file path")
 	rf.String("keypem", "", "key.pem file path")
 
@@ -161,11 +165,16 @@ func exitOnError(err error, msg string) {
 // Execute runs dfdaemon.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Errorf("dfdaemon failed: %v", err)
-		if e, ok := errors.Cause(err).(*dferr.DfError); ok {
-			os.Exit(e.Code)
+		if err == http.ErrServerClosed {
+			logrus.Infof("dfdaemon is shutting down...")
 		} else {
-			os.Exit(1)
+			logrus.Errorf("dfdaemon failed: %v", err)
+			if e, ok := errors.Cause(err).(*dferr.DfError); ok {
+				logrus.Errorf("dfdaemon failed: %v", err)
+				os.Exit(e.Code)
+			} else {
+				os.Exit(1)
+			}
 		}
 	}
 }
