@@ -21,14 +21,12 @@
 
 	<property file="${root.dir}/build.number" prefix="ok."/>
 
-	<exec executable="git" outputproperty="git.tag">
-		<arg line="rev-list --tags --max-count=1" />
-	</exec>
 	<exec executable="git" outputproperty="git.version">
-		<arg line="describe --tags ${git.tag}" />
+		<arg line="describe --tags --match 'v*' --abbrev=0" />
 	</exec>
 
 	<property name="rpm.release" value="ok${ok.build.number.build}"/>
+	<property name="go.proxy" value="https://nexus.odkl.ru/repository/proxy.golang.org/"/>
 
 	<!-- override build.number properties for common ant targets to work properly -->
 	<loadresource property="build.number.major">
@@ -123,6 +121,7 @@
 		<echo>... calling make ${make.cmd}</echo>
 		<exec executable="make" dir="${root.dir}">
 			<env key="USE_DOCKER" value="1"/>
+			<env key="GOPROXY" value="${go.proxy}"/>
 			<env key="RPM_NAME" value="${rpm.name}"/>
 			<env key="RPM_VERSION" value="${rpm.version}"/>
 			<env key="RPM_RELEASE" value="${rpm.release}"/>
@@ -131,7 +130,7 @@
 		</exec>
 	</target>
 
-	<target name="build" depends="init" description="Compile and build Draginfly binaries only">
+	<target name="build" depends="init" description="Compile and build Dragonfly binaries only">
 		<property name="banner.title" value="Development building '${ant.project.name} ${build.number.str}'." />
 		<antcall target="banner" />
 

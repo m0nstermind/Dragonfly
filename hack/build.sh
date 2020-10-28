@@ -102,6 +102,7 @@ main() {
                 build-supernode-docker
             ;;
         esac
+        chmod -R +w .go
     else
         echo "Begin to build in the local environment."
         case "${1-}" in
