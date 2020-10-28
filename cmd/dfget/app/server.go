@@ -101,6 +101,11 @@ func runServer() error {
 func initServerLog() error {
 	if cfg.LogConfig.Path == "" {
 		cfg.LogConfig.Path = filepath.Join(cfg.WorkHome, "logs", "dfserver.log")
+	} else {
+		// cfg.LogConfig.Path here holds the log name for dfget downloader process
+		// so alter it to save to the dfserver.log file in the same directory
+		dir := filepath.Dir(cfg.LogConfig.Path)
+		cfg.LogConfig.Path = filepath.Join( dir, "dfserver.log")
 	}
 	opts := []dflog.Option{
 		dflog.WithLogFile(cfg.LogConfig.Path, cfg.LogConfig.MaxSize, cfg.LogConfig.MaxBackups),
