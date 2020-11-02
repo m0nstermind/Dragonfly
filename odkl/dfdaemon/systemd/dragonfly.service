@@ -11,8 +11,6 @@ TimeoutStopSec=60
 PIDFile=/var/lib/containers/dragonfly/dragonfly.pid
 EnvironmentFile=-/etc/sysconfig/dragonfly
 ExecStart=/opt/dragonfly/df-client/dfdaemon --node ${SUPERNODES} --port ${PORT} --peerPort ${PEERPORT} --streamAliveTime=${IDLE_TIME} --verbose --localIp ${IP}
-Restart=on-failure
-RestartSec=30
 # starting the dragonfly daemon with BATCH CPU sched priority, so it does not affect latency sensitive cloud tasks running on the same minion
 CPUSchedulingPolicy=batch
 Nice=19

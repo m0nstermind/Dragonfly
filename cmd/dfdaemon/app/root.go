@@ -75,7 +75,9 @@ var rootCmd = &cobra.Command{
 		}
 		// if stream mode, launch peer server in dfdaemon progress
 		if cfg.StreamMode {
-			go dfdaemon.LaunchPeerServer(s,*cfg)
+			if err := dfdaemon.LaunchPeerServer(s,*cfg); err != nil {
+				return err
+			}
 		}
 		return s.Start()
 	},
