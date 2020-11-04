@@ -185,8 +185,8 @@ func downloadFile(cfg *config.Config, supernodeAPI api.SupernodeAPI, locator loc
 	}
 
 	if success {
-		logrus.Infof("download SUCCESS cost:%.3fs length:%d",
-			time.Since(cfg.StartTime).Seconds(), cfg.RV.FileLength)
+		logrus.Infof("download SUCCESS cost:%.3fs length:%d speed:%.3fMB/s",
+			downloadTime, cfg.RV.FileLength, float64( cfg.RV.FileLength )/downloadTime/1024/1024 )
 	} else {
 		logrus.Infof("download FAIL cost:%.3fs length:%d reason:%d error:%v",
 			time.Since(cfg.StartTime).Seconds(), cfg.RV.FileLength, cfg.BackSourceReason, err)

@@ -90,7 +90,8 @@ func (pc *PowerClient) Run() error {
 	content, err := pc.downloadPiece()
 
 	timeDuring := time.Since(startTime).Seconds()
-	logrus.Debugf("client range:%s cost:%.3f from peer:%s:%d, readCost:%.3f, length:%d, speed:%.3fMB/s",
+	logrus.Debugf("piece %d client range:%s cost:%.3f from peer:%s:%d, readCost:%.3f, length:%d, speed:%.3fMB/s",
+		pc.pieceTask.PieceNum,
 		pc.pieceTask.Range, timeDuring, pc.pieceTask.PeerIP, pc.pieceTask.PeerPort,
 		pc.readCost.Seconds(), pc.total, float64( pc.total )/timeDuring/1024/1024)
 
@@ -203,7 +204,7 @@ func (pc *PowerClient) createDownloadRequest() *api.DownloadRequest {
 
 func (pc *PowerClient) successPiece(content *pool.Buffer) *Piece {
 	piece := NewPieceContent(pc.taskID, pc.node, pc.pieceTask.Cid, pc.pieceTask.Range,
-		constants.ResultSemiSuc, constants.TaskStatusRunning, content, pc.cdnSource)
+		constants.ResultSemiSuc, constants.TaskStatusRunning, content, pc.cdnSource, pc.pieceTask.PeerIP)
 	piece.PieceSize = pc.pieceTask.PieceSize
 	piece.PieceNum = pc.pieceTask.PieceNum
 	return piece

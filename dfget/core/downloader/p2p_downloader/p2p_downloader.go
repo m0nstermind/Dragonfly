@@ -19,6 +19,7 @@ package downloader
 import (
 	"context"
 	"fmt"
+	"github.com/dragonflyoss/Dragonfly/pkg/netutils"
 	"io"
 	"math/rand"
 	"strconv"
@@ -114,6 +115,9 @@ type P2PDownloader struct {
 	// unit: Millisecond
 	minTimeout int
 	maxTimeout int
+
+	// per peer download stats. peerIp -> total bytes downloaded from it
+	peerTotals map[string]int64
 }
 
 var _ downloader.Downloader = &P2PDownloader{}
@@ -130,6 +134,7 @@ func NewP2PDownloader(cfg *config.Config,
 		RegisterResult: result,
 		minTimeout:     50,
 		maxTimeout:     100,
+		peerTotals: 	make( map[string] int64 ),
 	}
 	p2p.init()
 	return p2p
@@ -415,6 +420,7 @@ func (p2p *P2PDownloader) getItem(latestItem *Piece) (bool, *Piece) {
 				item.Result == constants.ResultSuc) {
 				p2p.total += item.ContentLength()
 				p2p.pieceSet[item.Range] = true
+				p2p.peerTotals[item.PeerIP] += item.ContentLength()
 			} else if !v {
 				delete(p2p.pieceSet, item.Range)
 			}
@@ -483,7 +489,26 @@ func (p2p *P2PDownloader) processPiece(response *types.PullPieceTaskResponse,
 	}
 }
 
+func (p2p *P2PDownloader) logDownloadPeerStats() {
+	var cdnTotal int64
+	var p2pTotal int64
+
+	superNodeIP := netutils.ExtractHost( p2p.node )
+
+	for peerIp, bytes := range p2p.peerTotals {
+		if peerIp == superNodeIP {
+			cdnTotal+=bytes
+		} else {
+			p2pTotal += bytes
+		}
+	}
+
+	logrus.Infof("TaskID %s downloaded %d bytes ( %d %% ) from cdn, %d bytes ( %d %% ) from p2p", p2p.taskID, cdnTotal, cdnTotal*100/p2p.total, p2pTotal, p2pTotal*100/p2p.total)
+}
+
 func (p2p *P2PDownloader) finishTask(ctx context.Context, pieceWriter PieceWriter) error {
+
+	p2p.logDownloadPeerStats()
 	// wait client writer finished
 	logrus.Infof("remaining piece to be written count:%d", p2p.clientQueue.Len())
 	p2p.clientQueue.Put(last)

@@ -62,6 +62,9 @@ type Piece struct {
 
 	// writerNum record the writer number which will write this piece.
 	writerNum int32
+
+	// where this piece was successfully downloaded from. == SuperNode if from cdn
+	PeerIP string `json:"-"`
 }
 
 // WriteTo writes piece raw data in content buffer to w.
@@ -155,7 +158,7 @@ func NewPieceSimple(taskID string, node string, status int, cdnSource apiTypes.C
 
 // NewPieceContent creates a Piece with specified content.
 func NewPieceContent(taskID, node, dstCid, pieceRange string,
-	result, status int, contents *pool.Buffer, cdnSource apiTypes.CdnSource) *Piece {
+	result, status int, contents *pool.Buffer, cdnSource apiTypes.CdnSource, peerIP string) *Piece {
 	return &Piece{
 		TaskID:    taskID,
 		SuperNode: node,
@@ -166,5 +169,6 @@ func NewPieceContent(taskID, node, dstCid, pieceRange string,
 		Content:   contents,
 		length:    int64(contents.Len()),
 		writerNum: 1,
+		PeerIP: peerIP,
 	}
 }
