@@ -328,11 +328,20 @@ func (p2p *P2PDownloader) pullPieceTask(item *Piece) (
 func (p2p *P2PDownloader) sleepInterval() (actual, expected time.Duration) {
 	expected = time.Duration(rand.Intn(p2p.maxTimeout-p2p.minTimeout)+p2p.minTimeout) * time.Millisecond
 	start := time.Now()
-	p2p.notifyQueue.PollTimeout(expected)
+	_, ok := p2p.notifyQueue.PollTimeout(expected)
+	for ok {
+		// reset backoff timeout, because we have some progress happening
+		p2p.minTimeout = 50
+		p2p.maxTimeout = 100
+
+		// draining all notifications from queue, so next invocation of sleepInterval would wait if no progress
+		// is made since current moment
+		_, ok = p2p.notifyQueue.PollTimeout( time.Duration( time.Millisecond ))
+	}
 	actual = time.Now().Sub(start)
 
-	// gradually increase the sleep time, up to [800-1600]
-	if p2p.minTimeout < 800 {
+	// gradually increase the sleep time, up to [800-1600] if waited for progress the time expected
+	if actual >= expected && p2p.minTimeout < 800 {
 		p2p.minTimeout *= 2
 		p2p.maxTimeout *= 2
 	}
