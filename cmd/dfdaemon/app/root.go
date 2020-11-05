@@ -62,7 +62,7 @@ var rootCmd = &cobra.Command{
 			return errors.Wrap(err, "get config from viper")
 		}
 
-		if err := initDfdaemon(cfg); err != nil {
+		if err := initDfdaemon(filepath.Dir(viper.GetViper().GetString("config")), cfg); err != nil {
 			return errors.Wrap(err, "init dfdaemon")
 		}
 

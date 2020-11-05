@@ -70,7 +70,9 @@ build_rpm() {
         --config-files ${RPM_SYSCONFIG_PATH} \
 	"${BUILD_PATH}/${DFGET_BINARY_NAME}=${INSTALL_HOME}/${INSTALL_CLIENT_PATH}/${DFGET_BINARY_NAME}" \
 	"${ODKL_DFD_PATH}/conf/dfdaemon.yml=${RPM_CONFIG_HOME}/dfdaemon.yml" \
+	"${ODKL_DFD_PATH}/conf/dfdaemon-log.yml=${RPM_CONFIG_HOME}/dfdaemon-log.yml" \
 	"${ODKL_DFD_PATH}/conf/dfget.yml=${RPM_CONFIG_HOME}/dfget.yml" \
+	"${ODKL_DFD_PATH}/conf/dfget-log.yml=${RPM_CONFIG_HOME}/dfget-log.yml" \
 	"${ODKL_DFD_PATH}/conf/sysconfig=${RPM_SYSCONFIG_PATH}" \
 	"${ODKL_DFD_PATH}/systemd/dragonfly.service=${RPM_SYSTEMD_HOME}/dragonfly.service" \
 	"${BUILD_PATH}/${DFDAEMON_BINARY_NAME}=${INSTALL_HOME}/${INSTALL_CLIENT_PATH}/${DFDAEMON_BINARY_NAME}"

@@ -79,7 +79,3 @@ verbose: true
 # The maximum number of CPUs that the dfdaemon can use 0 - use all cpus
 maxprocs: 0
 
-# Logging
-logConfig:
-  # Log file path
-  path: /var/log/dragonfly-daemon

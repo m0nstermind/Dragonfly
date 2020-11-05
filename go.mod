@@ -10,6 +10,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/cpuguy83/go-md2man v1.0.7 // indirect
 	github.com/emirpasic/gods v1.12.0
+	github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665 // indirect
 	github.com/go-check/check v0.0.0-20161208181325-20d25e280405
 	github.com/go-openapi/analysis v0.0.0-20170813233457-8ed83f2ea9f0 // indirect
 	github.com/go-openapi/errors v0.0.0-20170426151106-03cfca65330d
@@ -21,11 +22,18 @@ require (
 	github.com/go-openapi/strfmt v0.0.0-20171222154016-4dd3d302e100
 	github.com/go-openapi/swag v0.0.0-20170606142751-f3f9494671f9
 	github.com/go-openapi/validate v0.0.0-20170705144413-8a82927c942c
+	github.com/gogap/config v0.0.0-20190801085516-e664631840ac // indirect
+	github.com/gogap/env_json v0.0.0-20150503135429-86150085ddbe // indirect
+	github.com/gogap/env_strings v0.0.1 // indirect
+	github.com/gogap/logrus_mate v1.1.0
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef
 	github.com/golang/mock v1.4.0
 	github.com/gorilla/context v0.0.0-20181012153548-51ce91d2eadd // indirect
 	github.com/gorilla/mux v1.5.0
 	github.com/gorilla/schema v1.1.0
+	github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa
+	github.com/heralight/logrus_mate v1.0.1
+	github.com/hoisie/redis v0.0.0-20160730154456-b5c6e81454e0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20170902151237-2a92e673c9a6 // indirect

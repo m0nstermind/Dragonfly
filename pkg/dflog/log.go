@@ -22,9 +22,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/heirko/go-contrib/logrusHelper"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	_ "github.com/heralight/logrus_mate/hooks/file"
+	_ "github.com/heralight/logrus_mate/hooks/syslog"
 )
 
 // LogConfig holds all configurable properties of log.
@@ -139,6 +144,27 @@ func WithSign(sign string) Option {
 		return nil
 	}
 }
+
+func InitMate(l *logrus.Logger, configName string, dirs []string  ) error {
+	var viper = viper.New()
+
+	viper.SetConfigName(configName) // name of config file (without extension)
+	// paths to look for the config file in
+	for _,v := range dirs {
+		viper.AddConfigPath(v)
+	}
+	err := viper.ReadInConfig()
+	if err != nil { // Handle errors reading the config file
+		return err
+	}
+
+	// Read configuration
+	var c = logrusHelper.UnmarshalConfiguration(viper) // Unmarshal configuration from Viper
+	logrusHelper.SetConfig(l, c)                       // for e.g. apply it to logrus default instance
+
+	return nil
+}
+
 
 // Init initializes the logger with given options. If no option is provided,
 // the logger's formatter will be set with an empty sign.

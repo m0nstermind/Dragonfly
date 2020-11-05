@@ -73,13 +73,13 @@ func getLocalIP(nodes []string) (localIP string) {
 }
 
 // initDfdaemon sets up running environment for dfdaemon according to the given config.
-func initDfdaemon(cfg *config.Properties) error {
+func initDfdaemon(configDir string, cfg *config.Properties) error {
 	// if Options.MaxProcs <= 0, programs run with GOMAXPROCS set to the number of cores available.
 	if cfg.MaxProcs > 0 {
 		runtime.GOMAXPROCS(cfg.MaxProcs)
 	}
 
-	if err := initLogger(*cfg); err != nil {
+	if err := initLogger(configDir, *cfg); err != nil {
 		return errors.Wrap(err, "init logger")
 	}
 
@@ -112,7 +112,7 @@ func initDfdaemon(cfg *config.Properties) error {
 }
 
 // initLogger initializes the global logrus logger.
-func initLogger(cfg config.Properties) error {
+func initLogger(configDir string, cfg config.Properties) error {
 	if cfg.WorkHome == "" {
 		current, err := user.Current()
 		if err != nil {
@@ -120,16 +120,35 @@ func initLogger(cfg config.Properties) error {
 		}
 		cfg.WorkHome = filepath.Join(current.HomeDir, ".small-dragonfly")
 	}
-	if cfg.LogConfig.Path == "" {
-		cfg.LogConfig.Path = filepath.Join(cfg.WorkHome, "logs", "dfdaemon.log")
-	}
-	opts := []dflog.Option{
-		dflog.WithLogFile(cfg.LogConfig.Path, cfg.LogConfig.MaxSize, cfg.LogConfig.MaxBackups),
-		dflog.WithSign(fmt.Sprintf("%d", os.Getpid())),
-		dflog.WithDebug(cfg.Verbose),
+
+	var opts []dflog.Option
+
+	dirs := []string{
+		cfg.WorkHome,
+		configDir,
 	}
 
-	logrus.Debugf("use log file %s", cfg.LogConfig.Path)
+	if dflog.InitMate(logrus.StandardLogger(),"dfdaemon-log", dirs) == nil {
+
+		opts = []dflog.Option{
+			dflog.WithSign(fmt.Sprintf("%d", os.Getpid())),
+		}
+		if cfg.Verbose {
+			opts = append(opts, dflog.WithDebug(cfg.Verbose))
+		}
+
+	} else {
+		if cfg.LogConfig.Path == "" {
+			cfg.LogConfig.Path = filepath.Join(cfg.WorkHome, "logs", "dfdaemon.log")
+		}
+		opts = []dflog.Option{
+			dflog.WithLogFile(cfg.LogConfig.Path, cfg.LogConfig.MaxSize, cfg.LogConfig.MaxBackups),
+			dflog.WithSign(fmt.Sprintf("%d", os.Getpid())),
+			dflog.WithDebug(cfg.Verbose),
+		}
+
+		logrus.Debugf("use log file %s", cfg.LogConfig.Path)
+	}
 
 	return errors.Wrap(dflog.Init(logrus.StandardLogger(), opts...), "init log")
 }

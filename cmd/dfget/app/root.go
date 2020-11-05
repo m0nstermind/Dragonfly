@@ -190,19 +190,38 @@ func initProperties() ([]*propertiesResult, error) {
 // while console log will output the dfget client's log in console/terminal for
 // debugging usage.
 func initClientLog() error {
-	if cfg.LogConfig.Path == "" {
-		cfg.LogConfig.Path = filepath.Join(cfg.WorkHome, "logs", "dfclient.log")
+
+	dirs := []string{
+		cfg.WorkHome,
+	}
+	for _, d := range cfg.ConfigFiles {
+		dirs = append( dirs , filepath.Dir(d))
 	}
 
-	opts := []dflog.Option{
-		dflog.WithLogFile(cfg.LogConfig.Path, cfg.LogConfig.MaxSize, cfg.LogConfig.MaxBackups),
-		dflog.WithSign(cfg.Sign),
-		dflog.WithDebug(cfg.Verbose),
-	}
+	var opts []dflog.Option
+	if dflog.InitMate(logrus.StandardLogger(),"dfget-log", dirs) == nil {
 
-	// Once cfg.Console is set, process should also output log to console.
-	if cfg.Console {
-		opts = append(opts, dflog.WithConsole())
+		opts = []dflog.Option{ dflog.WithSign(cfg.Sign) }
+		if cfg.Verbose {
+			opts = append(opts, dflog.WithDebug(cfg.Verbose))
+		}
+
+	} else {
+
+		if cfg.LogConfig.Path == "" {
+			cfg.LogConfig.Path = filepath.Join(cfg.WorkHome, "logs", "dfclient.log")
+		}
+
+		opts = []dflog.Option{
+			dflog.WithLogFile(cfg.LogConfig.Path, cfg.LogConfig.MaxSize, cfg.LogConfig.MaxBackups),
+			dflog.WithSign(cfg.Sign),
+			dflog.WithDebug(cfg.Verbose),
+		}
+
+		// Once cfg.Console is set, process should also output log to console.
+		if cfg.Console {
+			opts = append(opts, dflog.WithConsole())
+		}
 	}
 
 	return dflog.Init(logrus.StandardLogger(), opts...)

@@ -1,0 +1,8 @@
+# This is default logging of dfget for Odnoklassniki
+level: debug
+hooks:
+   - name: "syslog"
+     options:
+        priority: LOG_DEBUG
+        tag: "dragonfly-daemon"
+

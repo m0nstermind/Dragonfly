@@ -39,6 +39,8 @@ github.com/emirpasic/gods v1.12.0/go.mod h1:YfzfFFoVP/catgzJb4IKIqXjX78Ha8FMSDh3
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665 h1:Iz3aEheYgn+//VX7VisgCmF/wW3BMtXCLbvHV4jMQJA=
+github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665/go.mod h1:19bUnum2ZAeftfwwLZ/wRe7idyfoW2MfmXO464Hrfbw=
 github.com/go-check/check v0.0.0-20161208181325-20d25e280405 h1:0kdUKH22y+PT7ZITTEcrrHsQfGmpi4fj0XGyoDe/krQ=
 github.com/go-check/check v0.0.0-20161208181325-20d25e280405/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
@@ -65,6 +67,14 @@ github.com/go-openapi/swag v0.0.0-20170606142751-f3f9494671f9/go.mod h1:DXUve3Dp
 github.com/go-openapi/validate v0.0.0-20170705144413-8a82927c942c h1:+cB2AzkH5ansXyfJT+M4BH9zpRz3hNuvbtMpCwbV7ys=
 github.com/go-openapi/validate v0.0.0-20170705144413-8a82927c942c/go.mod h1:ve8xoSHgqBUifiKgaVbxLmOE0ckvH0oXfsJcnm6SIz0=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
+github.com/gogap/config v0.0.0-20190801085516-e664631840ac h1:DubXGwTyEo8n1W1KYTXeuDsxKK3yowFEQHujAZRtpbg=
+github.com/gogap/config v0.0.0-20190801085516-e664631840ac/go.mod h1:oBHg+chXMdjU9A6Dfj0vg/1ir/isLEGXftHwj70ZsV8=
+github.com/gogap/env_json v0.0.0-20150503135429-86150085ddbe h1:Bas8CRtrh4C40Q6EBM3JliUmHCh1Eaj4qpGzryF3xcw=
+github.com/gogap/env_json v0.0.0-20150503135429-86150085ddbe/go.mod h1:haNL4yT9uKqSKlXg4XnrO44xmoAyvn82XEtXzIRWvEo=
+github.com/gogap/env_strings v0.0.1 h1:Qyv99n5xOuipWu48nMN/uwRozy2XvVdJUqJE1dsL4og=
+github.com/gogap/env_strings v0.0.1/go.mod h1:9B1DBIKgMDX8KqkjCjBnPoxXCtMKSpretukTMXlE7ew=
+github.com/gogap/logrus_mate v1.1.0 h1:DJXhy5P8/Dc0qxoKrsh0VnwENooZeEv1XehQXOnoNeY=
+github.com/gogap/logrus_mate v1.1.0/go.mod h1:BlkwmwrCtsst1qxpY98I83RZZCBOdddEJ5qwbZhsR+o=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
@@ -91,6 +101,12 @@ github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgf
 github.com/grpc-ecosystem/grpc-gateway v1.9.0/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
+github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa h1:TcT7Ll6YpAFhTfk4JQz1XZ7aTaKWVQsxQQSio8B3dBs=
+github.com/heirko/go-contrib v0.0.0-20200825160048-11fc5e2235fa/go.mod h1:+XqKin+DP4zEu3b0QJ3KyJqYuHzCV0TmmVXCtstKlNY=
+github.com/heralight/logrus_mate v1.0.1 h1:9qe6YNySFd2ERcJFLzC7q0E6HSdZW1afeuODz1+h4w0=
+github.com/heralight/logrus_mate v1.0.1/go.mod h1:FOZ+u9G+H/0QI9OJa6Y2yRO7Du0l5b8CIYbmQ3fGzD4=
+github.com/hoisie/redis v0.0.0-20160730154456-b5c6e81454e0 h1:mjZV3MTu2A5gwfT5G9IIiLGdwZNciyVq5qqnmJJZ2JI=
+github.com/hoisie/redis v0.0.0-20160730154456-b5c6e81454e0/go.mod h1:pMYMxVaKJqCDC1JUg/XbPJ4/fSazB25zORpFzqsIGIc=
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=

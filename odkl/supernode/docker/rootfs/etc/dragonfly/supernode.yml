@@ -77,6 +77,3 @@ base:
   IntervalThreshold: 2h0m0s
   # how many 10%s of disk to clean dirung a single GC
   cleanratio: 1
-  # log to console, so systemd can redirect it to syslog
-  logConfig:
-    path: "/dev/stdout"

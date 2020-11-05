@@ -31,7 +31,3 @@ clientQueueSize: 6
 
 workHome: /var/lib/containers/dragonfly
 
-# Logging
-logConfig:
-   # Log file path
-   path: /var/log/dragonfly-download

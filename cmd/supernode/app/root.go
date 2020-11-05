@@ -81,13 +81,13 @@ var rootCmd = &cobra.Command{
 		}
 
 		// initialize supernode logger.
-		if err := initLog(logrus.StandardLogger(), "app.log", cfg.LogConfig); err != nil {
+		if err := initLog(logrus.StandardLogger(), "app.log", "supernode-log", cfg.LogConfig); err != nil {
 			return err
 		}
 
 		// initialize dfget logger.
 		dfgetLogger := logrus.New()
-		if err := initLog(dfgetLogger, "dfget.log", cfg.LogConfig); err != nil {
+		if err := initLog(dfgetLogger, "dfget.log", "dfget-log", cfg.LogConfig); err != nil {
 			return err
 		}
 
@@ -351,29 +351,32 @@ func decodeWithYAML(types ...reflect.Type) mapstructure.DecodeHookFunc {
 }
 
 // initLog initializes log Level and log format.
-func initLog(logger *logrus.Logger, logPath string, logConfig dflog.LogConfig) error {
-	logFilePath := logConfig.Path
-	if logFilePath == "" {
-		logFilePath = filepath.Join(supernodeViper.GetString("base.homeDir"), "logs", logPath)
-	}
+func initLog(logger *logrus.Logger, logPath string, logMateConfig string, logConfig dflog.LogConfig) error {
+
 	opts := []dflog.Option{
 		dflog.WithSign(fmt.Sprintf("%d", os.Getpid())),
-		dflog.WithDebug(supernodeViper.GetBool("base.debug")),
 	}
 
-	if logFilePath == "/dev/stdout" {
-		opts = append([]dflog.Option{
-			dflog.WithConsole(),
-		},
-			opts...)
+	dirs := []string{
+		supernodeViper.GetString("base.homeDir"),
+		filepath.Dir(supernodeViper.GetString("config")),
+	}
+
+	if dflog.InitMate(logger, logMateConfig, dirs) == nil {
+		if supernodeViper.GetBool("base.debug") {
+			opts = append(opts, dflog.WithDebug(supernodeViper.GetBool("base.debug")))
+		}
+
 	} else {
-		opts = append([]dflog.Option{
-			dflog.WithLogFile(logFilePath, logConfig.MaxSize, logConfig.MaxBackups),
-		},
-			opts...)
+		logFilePath := logConfig.Path
+		if logFilePath == "" {
+			logFilePath = filepath.Join(supernodeViper.GetString("base.homeDir"), "logs", logPath)
+		}
+		opts = append(opts, dflog.WithLogFile(logFilePath, logConfig.MaxSize, logConfig.MaxBackups))
+		logrus.Debugf("use log file %s", logFilePath)
+		opts = append(opts, dflog.WithDebug(supernodeViper.GetBool("base.debug")))
 	}
 
-	logrus.Debugf("use log file %s", logFilePath)
 	if err := dflog.Init(logger, opts...); err != nil {
 		return errors.Wrap(err, "init log")
 	}
