@@ -12,4 +12,4 @@ PEERPORT=15001
 # --node strings       specify the addresses(host:port) of supernodes that will be passed to dfget.
 SUPERNODES=supernode.dragonfly.devcloud.odkl.ru:5002
 # Idling alive duration with no accessing by any upload requests. After this idle period dfdaemon will automatically exit
-IDLE_TIME="5m"
+IDLE_TIME="10m"

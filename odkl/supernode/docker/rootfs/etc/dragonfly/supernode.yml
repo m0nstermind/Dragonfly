@@ -61,8 +61,8 @@ base:
   # TaskExpireTime when a task is not accessed within the taskExpireTime,
   # and it will be treated to be expired.
   # default: 3min
-  # ODKL: the deploy timeout is 5 minutes
-  taskExpireTime: 5m0s
+  # ODKL: the deploy timeout is 10 minutes
+  taskExpireTime: 10m0s
   # PeerGCDelay is the delay time to execute the GC after the peer has reported the offline.
   # default: 3min
   peerGCDelay: 1m0s
