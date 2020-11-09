@@ -168,9 +168,6 @@ func (cw *ClientWriter) Run(ctx context.Context) {
 		item := cw.clientQueue.Poll()
 		state, ok := item.(string)
 		if ok && state == last {
-			if !cw.acrossWrite {
-				cw.serviceFile.Sync()
-			}
 			break
 		}
 		if ok && state == reset {
