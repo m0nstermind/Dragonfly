@@ -48,7 +48,7 @@ proxies:
 #dfget_flags: ["--node", "192.168.33.21", "--verbose", "--ip", "192.168.33.23", "--port", "15001",
 #              "--expiretime", "3m0s", "--alivetime", "5m0s", "-f", "filterParam1&filterParam2"]
 dfget_flags: ["--verbose", "--port", "15001",
-              "--expiretime", "5m0s", "--alivetime", "5m0s", "--callsystem","podman",
+              "--expiretime", "60m0s", "--alivetime", "60m0s", "--callsystem","podman",
               ]
 
 # Specify the addresses(host:port) of supernodes, it is just to be compatible with previous versions
