@@ -9,6 +9,8 @@ After=confp-init.service
 [Service]
 ExecStart=/opt/dragonfly/server/supernode --advertise-ip ${cloud_lan} --config /etc/dragonfly/supernode.yml
 SyslogFacility=local4
+# Exit container with exit code of this unit
+ExecStopPost=/bin/sh -c 'eval "$$(systemctl -p ExecMainStatus show %n)" && systemctl -f exit "$$ExecMainStatus"'
 
 [Install]
 WantedBy=multi-user.target
