@@ -277,6 +277,8 @@ func initFlags() {
 	// others
 	flagSet.BoolVarP(&cfg.ShowBar, "showbar", "b", false,
 		"show progress bar, it is conflict with '--console'")
+	flagSet.BoolVar(&cfg.NodesFallback, "nodesfallback",false,
+		"always contact first supernode; others are contacted only if primary failed")
 	flagSet.BoolVar(&cfg.Console, "console", false,
 		"show log on console, it's conflict with '--showbar'")
 	flagSet.BoolVar(&cfg.Verbose, "verbose", false,

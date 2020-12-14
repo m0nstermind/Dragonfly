@@ -209,6 +209,9 @@ type Config struct {
 	// If set true, log level will be 'debug'.
 	Verbose bool `json:"verbose,omitempty"`
 
+	// Use fallback nodes locator instead of weighted shuffled list ( the default )
+	NodesFallback bool `json:"nodesFallback,omitempty"`
+
 	// Nodes specify supernodes.
 	Nodes []string `json:"-"`
 

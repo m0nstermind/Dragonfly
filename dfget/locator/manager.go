@@ -41,7 +41,12 @@ var DefaultBuilder Builder = func(cfg *config.Config) SupernodeLocator {
 	if cfg == nil || len(cfg.Nodes) == 0 {
 		return NewStaticLocator(GroupDefaultName, config.GetDefaultSupernodesValue())
 	}
-	locator, _ := NewStaticLocatorFromStr(GroupConfigName, cfg.Nodes)
+	var locator SupernodeLocator
+	if cfg.NodesFallback {
+		locator, _ = NewFallbackLocatorFromStr(GroupConfigName, cfg.Nodes)
+	} else {
+		locator, _ = NewStaticLocatorFromStr(GroupConfigName, cfg.Nodes)
+	}
 	return locator
 }
 

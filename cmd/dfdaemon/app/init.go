@@ -29,7 +29,6 @@ import (
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/config"
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/constant"
 	dfgetcfg "github.com/dragonflyoss/Dragonfly/dfget/config"
-	"github.com/dragonflyoss/Dragonfly/pkg/algorithm"
 	"github.com/dragonflyoss/Dragonfly/pkg/dflog"
 	"github.com/dragonflyoss/Dragonfly/pkg/errortypes"
 	"github.com/dragonflyoss/Dragonfly/pkg/fileutils"
@@ -41,21 +40,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
-
-// adjustSupernodeList adjusts the super nodes [a,b] to [a,b,b,a]
-func adjustSupernodeList(nodes []string) []string {
-	switch nodesLen := len(nodes); nodesLen {
-	case 0:
-		return nodes
-	case 1:
-		return append(nodes, nodes[0])
-	default:
-		algorithm.Shuffle(nodesLen, func(i, j int) {
-			nodes[i], nodes[j] = nodes[j], nodes[i]
-		})
-		return append(nodes, nodes...)
-	}
-}
 
 // getLocalIP return the localIP which connects to super node
 func getLocalIP(nodes []string) (localIP string) {
@@ -93,7 +77,6 @@ func initDfdaemon(configDir string, cfg *config.Properties) error {
 			"ensure local repo %s exists", cfg.DFRepo,
 		)
 	}
-	cfg.SuperNodes = adjustSupernodeList(cfg.SuperNodes)
 	if stringutils.IsEmptyStr(cfg.LocalIP) {
 		cfg.LocalIP = getLocalIP(cfg.SuperNodes)
 	}
