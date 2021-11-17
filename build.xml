@@ -119,7 +119,7 @@
 
 	<target name="make" >
 		<echo>... calling make ${make.cmd}</echo>
-		<exec executable="make" dir="${root.dir}">
+		<exec executable="make" dir="${root.dir}" vmlauncher="false">
 			<env key="USE_DOCKER" value="1"/>
 			<env key="GOPROXY" value="${go.proxy}"/>
 			<env key="RPM_NAME" value="${rpm.name}"/>
