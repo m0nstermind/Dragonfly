@@ -67,6 +67,7 @@ build-docker() {
         -w /go/src/${PKG}                                                 \
         ${BUILD_IMAGE}                                                    \
         go build -o "/go/bin/$1" -ldflags "${LDFLAGS}" ./cmd/"$2" 
+    chmod +x ${BUILD_SOURCE_HOME}/${BUILD_PATH}/$1
     echo "BUILD: $1 in ${BUILD_SOURCE_HOME}/${BUILD_PATH}/$1"
 }
 
