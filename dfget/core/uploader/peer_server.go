@@ -507,7 +507,15 @@ func (ps *peerServer) deleteExpiredFile(path string, info os.FileInfo,
 			return true
 		}
 	} else {
-		os.Remove(path)
+		// INCOKL-846752
+		// if task of the file is not found, this means either the file is leftover from recent crash
+		// or its task was not registered with the peer server yet due to natural race between dfget and dfdaemon
+		// processes. So, delete file only, if it is expired looking at its modtime.
+		// if the last access time is expireTime ago
+		if time.Since(info.ModTime()) > expireTime {
+			os.Remove(path)
+			logrus.Warn("orphan file ", path, " expired on modification time ", info.ModTime() )
+		}
 		return true
 	}
 	return false
