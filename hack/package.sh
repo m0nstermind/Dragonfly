@@ -31,7 +31,7 @@ main() {
     if [ "1" == "${USE_DOCKER}" ]
     then
         echo "Begin to package with docker."
-        FPM="docker run --rm -v $(pwd):$(pwd) -w $(pwd) inoc603/fpm:alpine"
+        FPM="docker run $DOCKER_PLATFORM --rm -v $(pwd):$(pwd) -w $(pwd) inoc603/fpm:alpine"
     else
         echo "Begin to package in local environment."
         FPM="fpm"

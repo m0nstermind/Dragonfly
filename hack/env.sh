@@ -18,6 +18,7 @@ set -o errexit
 set -o pipefail
 set -x
 
+export DOCKER_PLATFORM="--platform linux/amd64"
 export INSTALL_HOME=/opt/dragonfly
 export INSTALL_CLIENT_PATH=df-client
 export INSTALL_SUPERNODE_PATH=df-supernode
@@ -38,8 +39,8 @@ BUILD_IMAGE=golang:1.13.15
 
 if [[ "1" == "${USE_DOCKER}" ]]
 then
-	GOOS=$(docker run --rm ${BUILD_IMAGE} go env GOOS | tr -dc '[:print:]' )
-	GOARCH=$(docker run --rm ${BUILD_IMAGE} go env GOARCH | tr -dc '[:print:]' )
+	GOOS=$(docker run $DOCKER_PLATFORM --rm ${BUILD_IMAGE} go env GOOS | tr -dc '[:print:]' )
+	GOARCH=$(docker run $DOCKER_PLATFORM --rm ${BUILD_IMAGE} go env GOARCH | tr -dc '[:print:]' )
 else
 	GOOS=$(go env GOOS)
 	GOARCH=$(go env GOARCH)

@@ -54,6 +54,7 @@ build-docker() {
     cd "${BUILD_SOURCE_HOME}" || return
     docker run                                                            \
         --rm                                                              \
+        $DOCKER_PLATFORM                                                              \
         -u "$(id -u)":"$(id -g)"                                          \
         -v "$(pwd)"/.go:/go                                               \
         -v "$(pwd)":/go/src/${PKG}                                        \
