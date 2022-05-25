@@ -78,7 +78,8 @@
 		while server ( supernode ) - to one-cloud docker image
 	-->
 	<property name="rpm.name" value="dragonfly-daemon"/>
-	<property name="rpm.file" value="${root.dir}/release/${rpm.name}-${build.number.str}.el7.x86_64.rpm"/>
+	<property name="rpm.file.name" value="${rpm.name}-${build.number.str}.el7.x86_64.rpm"/>
+	<property name="rpm.file" value="${root.dir}/release/${rpm.file.name}"/>
 
 
 	<!-- override git clone to not use shared references - they will not work under docker -->
@@ -96,7 +97,6 @@
 	<!-- ============================================================================ -->
 	<!-- Initialize -->
 	<!-- ============================================================================ -->
-
 
 	<target name="init">
 		<echo message="build.compiler = ${build.compiler}" />
@@ -220,6 +220,49 @@
     </target>
     -->
 
+	<!-- upload rpm to nexus for rpm_sign_and_deploy Ansible job -->
+	<target name="upload-rpm-to-nexus" depends="init-http-task" if="nexus.repository.rpm">
+		<property name="rpm.url" value="${nexus.url}/repository/${nexus.repository.rpm}/${rpm.name}/${rpm.file.name}"/>
+		<http method="PUT" printresponse="true" expected="201" url="${rpm.url}">
+			<credentials username="${nexus.username}" password="${nexus.password}" />
+			<entity file="${build.components}/${rpm.file.name}" binary="true" />
+        </http>
+	</target>
+
+	<!-- serialize extra vars to json string -->
+	<target name="prepare-extra-vars" if="rpm.url">
+		<script language="javascript"><![CDATA[
+			var rpmFileName = project.getProperty("rpm.file.name");
+			var rpmUrl = project.getProperty("rpm.url");
+			var extraVars = {
+				"pkg_name": rpmFileName, 
+				"nexus_url": rpmUrl, 
+				"user_name": "builder", 
+				"os_version": "7", 
+				"repo_name": "local"
+			}
+			project.setProperty("awx.runner.extra.vars", JSON.stringify(extraVars));
+		]]></script>
+	</target>
+
+	<!-- 
+		runs Ansible job rpm_sign_and_deploy using AWX tasks runner
+		job takes nexus rpm url from extra vars
+	-->
+	<target name="publish-rpm" depends="upload-rpm-to-nexus,prepare-extra-vars" if="rpm.deploy.template.id">
+		<echo>Running AWX task using template ${rpm.deploy.template.id} with extra vars ${awx.runner.extra.vars}</echo>
+		<exec executable="awx-tasks-runner" failonerror="true">
+            <arg value="--awx_user"/>
+            <arg value="${awx.user}"/>
+            <arg value="--awx_password"/>
+            <arg value="${awx.password}"/>
+            <arg value="--template_id"/>
+            <arg value="${rpm.deploy.template.id}"/>
+            <arg value="--extra_vars"/>
+            <arg value="${awx.runner.extra.vars}"/>
+        </exec>
+	</target>
+
     <target name="export-release" depends="ivy-publish"
             description="Uploads assembled zip file and Ivy artifacts to repository">
 		<antcall target="info">
@@ -229,6 +272,8 @@
 		<antcall target="docker-export" >
 			<param name="docker.tag" value="${build.number.str}"/>
 		</antcall>
+
+		<antcall target="publish-rpm"/>
 
 	</target>
 
