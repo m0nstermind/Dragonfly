@@ -70,6 +70,8 @@
 	<property name="docker.image" value="${ant.project.name}-supernode"/>
 	<property name="docker.image.base" value="centos7-base:stable"/>
 
+	<property name="master.build.number.pattern" value="^\d+\.\d+\.\d+-ok\d+$"/>
+
 	<!-- include common ant targets -->
 	<import file="../one-deploy/build/common-targets.xml"/>
 
