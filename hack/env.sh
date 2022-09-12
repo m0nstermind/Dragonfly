@@ -35,7 +35,7 @@ export GO_SOURCE_EXCLUDES=( \
 )
 
 USE_DOCKER=${USE_DOCKER:-"0"}
-BUILD_IMAGE=golang:1.13.15
+BUILD_IMAGE=golang:1.18.1
 
 if [[ "1" == "${USE_DOCKER}" ]]
 then
