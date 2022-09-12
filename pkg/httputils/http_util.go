@@ -326,6 +326,22 @@ func HTTPWithHeaders(method, url string, headers map[string]string, timeout time
 		c = &http.Client{
 			Transport: transport,
 		}
+	} else {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   2 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          1,
+			IdleConnTimeout:       10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+
+		c = &http.Client{
+			Transport: transport,
+		}
+
 	}
 
 	res, err := c.Do(req)

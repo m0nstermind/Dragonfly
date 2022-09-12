@@ -30,7 +30,6 @@ import (
 	"github.com/dragonflyoss/Dragonfly/dfget/types"
 	"github.com/dragonflyoss/Dragonfly/pkg/constants"
 	"github.com/dragonflyoss/Dragonfly/pkg/errortypes"
-	"github.com/dragonflyoss/Dragonfly/pkg/httputils"
 	"github.com/dragonflyoss/Dragonfly/pkg/limitreader"
 	"github.com/dragonflyoss/Dragonfly/pkg/netutils"
 	"github.com/dragonflyoss/Dragonfly/pkg/pool"
@@ -93,7 +92,7 @@ func (pc *PowerClient) Run() error {
 	logrus.Debugf("piece %d client range:%s cost:%.3f from peer:%s:%d, readCost:%.3f, length:%d, speed:%.3fMB/s",
 		pc.pieceTask.PieceNum,
 		pc.pieceTask.Range, timeDuring, pc.pieceTask.PeerIP, pc.pieceTask.PeerPort,
-		pc.readCost.Seconds(), pc.total, float64( pc.total )/timeDuring/1024/1024)
+		pc.readCost.Seconds(), pc.total, float64(pc.total)/timeDuring/1024/1024)
 
 	if err != nil {
 		logrus.Errorf("failed to read piece cont(%s) from dst:%s:%d, wait 20 ms: %v",
@@ -118,13 +117,6 @@ func (pc *PowerClient) ClientError() *types.ClientErrorRequest {
 func (pc *PowerClient) downloadPiece() (content *pool.Buffer, e error) {
 	dstIP := pc.pieceTask.PeerIP
 	peerPort := pc.pieceTask.PeerPort
-
-	// check that the target download peer is available
-	if dstIP != "" && dstIP != netutils.ExtractHost(pc.node) {
-		if _, e = httputils.CheckConnect(dstIP, peerPort, -1); e != nil {
-			return nil, e
-		}
-	}
 
 	// send download request
 	startTime := time.Now()
