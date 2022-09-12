@@ -73,14 +73,19 @@ func (s *supernodeRegister) Register(peerPort int) (*RegisterResult, *errortypes
 			retryTimes++
 			logrus.Infof("sleep 1.0 s to wait auth(%d/3)...", retryTimes)
 			time.Sleep(1000 * time.Millisecond)
-			return s.locator.Get()
+		} else {
+			s.locator.Next()
 		}
-		return s.locator.Next()
+		selected := s.locator.Select(s.cfg.URL)
+		if selected == nil {
+			selected = s.locator.Get()
+		}
+		return selected
 	}
 
 	logrus.Infof("do register to one of %v", s.locator)
 	req := s.constructRegisterRequest(peerPort)
-	for node = s.locator.Next(); node != nil; node = nextOrRetry() {
+	for node = nextOrRetry(); node != nil; node = nextOrRetry() {
 		if s.lastRegisteredNode == node {
 			logrus.Warnf("the last registered node is the same(%v)", s.lastRegisteredNode)
 			continue

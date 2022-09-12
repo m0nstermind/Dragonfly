@@ -18,6 +18,10 @@ package locator
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"hash/fnv"
+	"net"
+	"sort"
 	"sync/atomic"
 
 	"github.com/dragonflyoss/Dragonfly/dfget/config"
@@ -29,8 +33,9 @@ import (
 // Unlike the static locator it will always connect to the first node in list, using other nodes as fallback, shuffling them to distribute the load.
 // This is useful when we want primary supernode to serve all local datacenter traffic and redirect to other when local fails
 type FallbackLocator struct {
-	idx   int32
-	Group *SupernodeGroup
+	idx      int32
+	Group    *SupernodeGroup
+	selected *Supernode
 }
 
 // ----------------------------------------------------------------------------
@@ -52,6 +57,14 @@ func NewFallbackLocator(groupName string, nodes []*config.NodeWeight) *FallbackL
 		ip, port := netutils.GetIPAndPortFromNode(node.Node, config.DefaultSupernodePort)
 		if ip == "" {
 			continue
+		}
+		hosts, err := net.LookupHost(ip)
+		if err != nil {
+			logrus.Warnf("Cannot resolve host %s: %v, ignored", ip, err)
+			continue
+		}
+		if len(hosts) > 1 {
+			logrus.Debugf("%s resolved to several addresses %v, will select them by hash circle ", ip, hosts)
 		}
 		supernode := &Supernode{
 			Schema:    config.DefaultSupernodeSchema,
@@ -88,12 +101,16 @@ func (s *FallbackLocator) Get() *Supernode {
 	if s.Group == nil {
 		return nil
 	}
+	if s.selected != nil {
+		return s.selected
+	}
 	return s.Group.GetNode(s.load())
 }
 
 // Next chooses the next available supernode for retrying or other
 // purpose. The current supernode should be set as this result.
 func (s *FallbackLocator) Next() *Supernode {
+	s.selected = nil
 	if s.Group == nil || s.load() >= len(s.Group.Nodes) {
 		return nil
 	}
@@ -103,8 +120,47 @@ func (s *FallbackLocator) Next() *Supernode {
 // Select chooses a supernode based on the giving key.
 // It should not affect the result of method 'Get()'.
 func (s *FallbackLocator) Select(key interface{}) *Supernode {
-	// unnecessary to implement this method
-	return nil
+	supernode := s.Get()
+
+	hosts, err := net.LookupHost(supernode.IP)
+	if err != nil {
+		return nil
+	}
+
+	if len(hosts) == 1 {
+		s.selected = &Supernode{
+			Schema:    config.DefaultSupernodeSchema,
+			IP:        hosts[0],
+			Port:      supernode.Port,
+			Weight:    supernode.Weight,
+			GroupName: supernode.GroupName,
+		}
+		logrus.Debugf("Selected supernode %s(%s)", supernode.IP, s.selected.IP)
+		return s.selected
+	} else if len(hosts) == 0 {
+		return nil
+	}
+
+	hash := hash(key.(string))
+	sort.Strings(hosts)
+
+	selected := hosts[hash%uint32(len(hosts))]
+
+	logrus.Debugf("Selected supernode %s IP %s from %v hashing %v", supernode.IP, selected, hosts, key)
+	s.selected = &Supernode{
+		Schema:    config.DefaultSupernodeSchema,
+		IP:        selected,
+		Port:      supernode.Port,
+		Weight:    supernode.Weight,
+		GroupName: supernode.GroupName,
+	}
+	return s.selected
+}
+
+func hash(input string) uint32 {
+	h := fnv.New32()
+	h.Write([]byte(input))
+	return h.Sum32()
 }
 
 // GetGroup returns the group with the giving name.
@@ -175,8 +231,8 @@ func (s *FallbackLocator) inc() int {
 func shuffleFallbackNodes(nodes []*Supernode) []*Supernode {
 	// shuffle all except the very first
 	if length := len(nodes); length > 1 {
-		algorithm.Shuffle(length - 1, func(i, j int) {
-			nodes[i + 1], nodes[j + 1] = nodes[j + 1], nodes[i + 1]
+		algorithm.Shuffle(length-1, func(i, j int) {
+			nodes[i+1], nodes[j+1] = nodes[j+1], nodes[i+1]
 		})
 	}
 	return nodes
