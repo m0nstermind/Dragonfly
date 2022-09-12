@@ -212,7 +212,15 @@ func (sm *Manager) tryGetPID(ctx context.Context, taskID string, pieceNum int, s
 		}
 	}()
 
-	for i := 0; i < len(peerIDs); i++ {
+	peersLen := len(peerIDs)
+	if peersLen == 0 {
+		return sm.cfg.GetSuperPID()
+	}
+
+	seed := rand.Intn(peersLen)
+	for j := 0; j < peersLen; j++ {
+		// start from random peer each time to distribute uploads more evenly across peers
+		i := (seed + j) % peersLen
 		// if failed to get peerState, and then it should not be needed.
 		peerState, err := sm.progressMgr.GetPeerStateByPeerID(ctx, peerIDs[i])
 		if err != nil {

@@ -20,15 +20,16 @@ import (
 	"github.com/dragonflyoss/Dragonfly/pkg/errortypes"
 	"github.com/dragonflyoss/Dragonfly/pkg/stringutils"
 	"github.com/dragonflyoss/Dragonfly/pkg/syncmap"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"sync/atomic"
 )
 
 // pieceState maintains the information about
 // which peers the piece currently exists on.
 type pieceState struct {
 	pieceContainer *syncmap.SyncMap
+	peerCount      int32
 }
 
 // newPieceState returns a new pieceState.
@@ -55,13 +56,15 @@ func (ps *pieceState) add(peerID string) error {
 		return err
 	}
 
+	atomic.AddInt32(&ps.peerCount, 1)
 	return ps.pieceContainer.Add(peerID, true)
 }
 
 func (ps *pieceState) getAvailablePeers() []string {
-	return ps.pieceContainer.ListKeyAsStringSlice()
+	return ps.pieceContainer.ListKeyAsStringSlice(atomic.LoadInt32(&ps.peerCount))
 }
 
 func (ps *pieceState) delete(peerID string) error {
+	atomic.AddInt32(&ps.peerCount, -1)
 	return ps.pieceContainer.Remove(peerID)
 }

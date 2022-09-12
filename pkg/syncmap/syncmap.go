@@ -193,9 +193,13 @@ func (mmap *SyncMap) Remove(key string) error {
 }
 
 // ListKeyAsStringSlice returns the list of keys as a string slice.
-func (mmap *SyncMap) ListKeyAsStringSlice() (result []string) {
+func (mmap *SyncMap) ListKeyAsStringSlice(expectedCount ...int32) (result []string) {
 	if mmap == nil {
 		return []string{}
+	}
+
+	if len(expectedCount) > 0 {
+		result = make([]string, 0, expectedCount[0])
 	}
 
 	rangeFunc := func(key, value interface{}) bool {
