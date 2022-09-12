@@ -100,6 +100,8 @@ type Properties struct {
 	KeyPem  string `yaml:"keypem" json:"keypem"`
 
 	Verbose bool `yaml:"verbose" json:"verbose"`
+	// Notbs indicates whether to not back source to download when p2p fails.
+	Notbs bool `yaml:"notbs" json:"notbs,omitempty"`
 
 	MaxProcs int `yaml:"maxprocs" json:"maxprocs"`
 

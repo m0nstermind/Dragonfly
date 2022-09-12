@@ -5,11 +5,11 @@
 registry_mirror:
   # url for the registry mirror
   # Remote url for the registry mirror, default is https://index.docker.io
-  remote: https://cloud-registry.odkl.ru
+  remote: https://cloud-registry.service.local.odkl.ru
   # whether to ignore https certificate errors
   insecure: false
   # optional certificates if the remote server uses self-signed certificates
-  # certs: ["/etc/docker/certs.d/cloud-registry.odkl.ru/ca.crt"]
+  # certs: ["/etc/docker/certs.d/cloud-registry.service.local.odkl.ru/ca.crt"]
 
 # Proxies is the list of rules for the transparent proxy. If no rules
 # are provided, all requests will be proxied directly. Request will be
@@ -48,8 +48,10 @@ proxies:
 #dfget_flags: ["--node", "192.168.33.21", "--verbose", "--ip", "192.168.33.23", "--port", "15001",
 #              "--expiretime", "3m0s", "--alivetime", "5m0s", "-f", "filterParam1&filterParam2"]
 # nodesfallback - always contact first supernode; others are contacted only if primary failed
-dfget_flags: ["--verbose", "--nodesfallback", "--port", "15001",
+# imagecfgdir: read imagename.yml additional config file when downloading its layers from this directory
+dfget_flags: ["--verbose", "--nodesfallback", "--notbs", "--port", "15001",
               "--expiretime", "60m0s", "--alivetime", "60m0s", "--callsystem","podman",
+              "--imagecfgdir", "/var/run/miniond/dfget-config"
               ]
 
 # Specify the addresses(host:port) of supernodes, it is just to be compatible with previous versions
@@ -64,6 +66,9 @@ ratelimit: 0
 
 # Temp output dir of dfdaemon, it must be an absolute path. and the default value is `$HOME/.small-dragonfly/dfdaemon/data/`
 workHome: /var/lib/containers/dragonfly
+
+# Do not fall back to source, if p2p download fails
+notbs: true
 
 # dfget path, which is the relative file path for the dfdaemon
 # default /opt/dragonfly/df-client/dfget

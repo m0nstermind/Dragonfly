@@ -85,6 +85,8 @@ type Properties struct {
 	// WorkHome work home path,
 	// default: `$HOME/.small-dragonfly`.
 	WorkHome string `yaml:"workHome" json:"workHome,omitempty"`
+	// Timeout download timeout string
+	TimeoutStr string `yaml:"timeout" json:"timeout"`
 
 	LogConfig dflog.LogConfig `yaml:"logConfig" json:"logConfig"`
 }
@@ -162,9 +164,6 @@ type Config struct {
 	// Output full output path.
 	Output string `json:"output"`
 
-	// Timeout download timeout(second).
-	Timeout time.Duration `json:"timeout,omitempty"`
-
 	// Md5 expected file md5.
 	Md5 string `json:"md5,omitempty"`
 
@@ -230,13 +229,19 @@ type Config struct {
 	//
 	// NOTE: It is recommended to use `/etc/dragonfly/dfget.yml` as default,
 	// and the `/etc/dragonfly.conf` is just to ensure compatibility with previous versions.
-	ConfigFiles []string `json:"-"`
+	ConfigFiles []string `json:"configs"`
+
+	// seek an additional config file named imagename.yml under this directory
+	ImageConfigDir string `json:"-"`
 
 	// RV stores the variables that are initialized and used at downloading task executing.
 	RV RuntimeVariable `json:"-"`
 
 	// The reason of backing to source.
 	BackSourceReason int `json:"-"`
+
+	// Timeout download timeout
+	Timeout time.Duration `json:"-"`
 
 	// Embedded Properties holds all configurable properties.
 	Properties

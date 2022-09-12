@@ -18,6 +18,7 @@ package app
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -74,6 +75,7 @@ func init() {
 
 // runDfget does some init operations and starts to download.
 func runDfget() error {
+	addImageConfigFileIfConfigured()
 	// get config from property files
 	propResults, err := initProperties()
 	if err != nil {
@@ -129,9 +131,6 @@ func initProperties() ([]*propertiesResult, error) {
 	properties := config.NewProperties()
 	for _, v := range cfg.ConfigFiles {
 		err := properties.Load(v)
-		if err == nil {
-			break
-		}
 		results = append(results, &propertiesResult{
 			prop:     properties,
 			fileName: v,
@@ -163,6 +162,14 @@ func initProperties() ([]*propertiesResult, error) {
 		cfg.ClientQueueSize = properties.ClientQueueSize
 	}
 
+	if cfg.Timeout == 0 && properties.TimeoutStr != "" {
+		duration, err := time.ParseDuration(properties.TimeoutStr)
+		if err == nil {
+			cfg.Timeout = duration
+		}
+		cfg.TimeoutStr = properties.TimeoutStr
+	}
+
 	cfg.LogConfig = properties.LogConfig
 
 	currentUser, err := user.Current()
@@ -184,6 +191,23 @@ func initProperties() ([]*propertiesResult, error) {
 	return results, nil
 }
 
+func addImageConfigFileIfConfigured() {
+	// take image name "one-cloud-web" from url and look for configuration file one-cloud-web.yml
+	// "https://cloud-registry.service.local.odkl.ru/v2/one-cloud-web/blobs/sha256:cedb2acd300ef9d6dcae81db2f2f43926c59cec0c13e8a746ea8252041f8eb7f"
+	if cfg.ImageConfigDir != "" {
+		if url, err2 := url.Parse(cfg.URL); err2 == nil {
+			path := url.EscapedPath()
+			if strings.HasPrefix(path, "/v2/") || strings.HasPrefix(path, "/v1/") {
+				split := strings.Split(path, "/")
+				if len(split) > 2 {
+					dynamicCfgFile := filepath.Join(cfg.ImageConfigDir, split[2]+".yml")
+					cfg.ConfigFiles = append(cfg.ConfigFiles, dynamicCfgFile)
+				}
+			}
+		}
+	}
+}
+
 // initClientLog initializes dfget client's logger.
 // There are two kinds of logger dfget client uses: logfile and console.
 // logfile is used to stored generated log in local filesystem,
@@ -195,13 +219,13 @@ func initClientLog() error {
 		cfg.WorkHome,
 	}
 	for _, d := range cfg.ConfigFiles {
-		dirs = append( dirs , filepath.Dir(d))
+		dirs = append(dirs, filepath.Dir(d))
 	}
 
 	var opts []dflog.Option
-	if dflog.InitMate(logrus.StandardLogger(),"dfget-log", dirs) == nil {
+	if dflog.InitMate(logrus.StandardLogger(), "dfget-log", dirs) == nil {
 
-		opts = []dflog.Option{ dflog.WithSign(cfg.Sign) }
+		opts = []dflog.Option{dflog.WithSign(cfg.Sign)}
 		if cfg.Verbose {
 			opts = append(opts, dflog.WithDebug(cfg.Verbose))
 		}
@@ -277,7 +301,7 @@ func initFlags() {
 	// others
 	flagSet.BoolVarP(&cfg.ShowBar, "showbar", "b", false,
 		"show progress bar, it is conflict with '--console'")
-	flagSet.BoolVar(&cfg.NodesFallback, "nodesfallback",false,
+	flagSet.BoolVar(&cfg.NodesFallback, "nodesfallback", false,
 		"always contact first supernode; others are contacted only if primary failed")
 	flagSet.BoolVar(&cfg.Console, "console", false,
 		"show log on console, it's conflict with '--showbar'")
@@ -285,6 +309,8 @@ func initFlags() {
 		"be verbose")
 	flagSet.StringVar(&cfg.WorkHome, "home", cfg.WorkHome,
 		"the work home directory of dfget")
+	flagSet.StringVar(&cfg.ImageConfigDir, "imagecfgdir", cfg.ImageConfigDir,
+		"the per image config directory of dfget; will read imagename.yml from this directory")
 
 	// pass to peer server which as a uploader server
 	flagSet.StringVar(&cfg.RV.LocalIP, "ip", "",

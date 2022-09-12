@@ -49,6 +49,7 @@ type DFRoundTripper struct {
 	Downloader       downloader.Interface
 	StreamDownloader downloader.Stream
 	streamMode       bool
+	notbs            bool
 }
 
 // New returns the default DFRoundTripper.
@@ -122,6 +123,13 @@ func WithStreamMode(streamMode bool) Option {
 	}
 }
 
+func WithNotbs(notbs bool) Option {
+	return func(rt *DFRoundTripper) error {
+		rt.notbs = notbs
+		return nil
+	}
+}
+
 // WithCondition configures how to decide whether to use dfget or not.
 func WithCondition(c func(r *http.Request) bool) Option {
 	return func(rt *DFRoundTripper) error {
@@ -140,6 +148,11 @@ func (roundTripper *DFRoundTripper) RoundTrip(req *http.Request) (*http.Response
 		logrus.Debugf("round trip with dfget: %s", req.URL.String())
 		if res, err := roundTripper.download(req, req.URL.String()); err == nil || exception.IsAuthError(err) {
 			return res, err
+		} else {
+			if roundTripper.notbs {
+				logrus.Debugf("direct roundtrip is disabled on %s", req.URL.String())
+				return res, err
+			}
 		}
 	}
 	logrus.Debugf("round trip directly: %s %s", req.Method, req.URL.String())

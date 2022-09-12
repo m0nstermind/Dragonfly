@@ -22,6 +22,7 @@ import (
 	"github.com/dragonflyoss/Dragonfly/pkg/netutils"
 	"io"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -134,7 +135,7 @@ func NewP2PDownloader(cfg *config.Config,
 		RegisterResult: result,
 		minTimeout:     50,
 		maxTimeout:     100,
-		peerTotals: 	make( map[string] int64 ),
+		peerTotals:     make(map[string]int64),
 	}
 	p2p.init()
 	return p2p
@@ -219,7 +220,7 @@ func (p2p *P2PDownloader) run(ctx context.Context, pieceWriter PieceWriter) erro
 		curItem.Content = nil
 		lastItem = nil
 
-		response, err := p2p.pullPieceTask(&curItem)
+		response, err := p2p.pullPieceTask(ctx, &curItem)
 		if err != nil {
 			logrus.Errorf("failed to download piece: %v", err)
 			if p2p.cfg.BackSourceReason == 0 {
@@ -264,11 +265,11 @@ func (p2p *P2PDownloader) GetTaskID() string {
 	return p2p.taskID
 }
 
-func (p2p *P2PDownloader) pullPieceTask(item *Piece) (
-	*types.PullPieceTaskResponse, error) {
+func (p2p *P2PDownloader) pullPieceTask(ctx context.Context, item *Piece) (*types.PullPieceTaskResponse, error) {
 	var (
-		res *types.PullPieceTaskResponse
-		err error
+		res      *types.PullPieceTaskResponse
+		err      error
+		deadline time.Time
 	)
 	req := &types.PullPieceTaskRequest{
 		SrcCid: p2p.cfg.RV.Cid,
@@ -279,17 +280,30 @@ func (p2p *P2PDownloader) pullPieceTask(item *Piece) (
 		TaskID: item.TaskID,
 	}
 
+	if d, ok := ctx.Deadline(); !ok {
+		deadline = time.Now().Add(time.Minute)
+	} else {
+		deadline = time.Now().Add(d.Sub(time.Now()) / 2)
+	}
+
 	for {
 		res, err = p2p.API.PullPieceTask(item.SuperNode, req)
 		if err != nil {
 			logrus.Errorf("failed to pull piece task(%+v): %v", item, err)
-			break
-		}
-		if res.Code != constants.CodePeerWait {
-			break
-		}
-		if p2p.queue.Len() > 0 {
-			break
+			if !os.IsTimeout(err) {
+				break
+			}
+			if time.Now().After(deadline) {
+				logrus.Errorf("deadline exceeded to retry pull piece task(%+v) at %v", item, deadline)
+				break
+			}
+		} else {
+			if res.Code != constants.CodePeerWait {
+				break
+			}
+			if p2p.queue.Len() > 0 {
+				break
+			}
 		}
 
 		actual, expected := p2p.sleepInterval()
@@ -319,7 +333,7 @@ func (p2p *P2PDownloader) pullPieceTask(item *Piece) (
 	item.SuperNode = registerRes.Node
 	item.TaskID = registerRes.TaskID
 	printer.Println("migrated to node:" + item.SuperNode)
-	return p2p.pullPieceTask(item)
+	return p2p.pullPieceTask(ctx, item)
 }
 
 // sleepInterval sleep for a while to wait for next pulling piece task until
@@ -336,7 +350,7 @@ func (p2p *P2PDownloader) sleepInterval() (actual, expected time.Duration) {
 
 		// draining all notifications from queue, so next invocation of sleepInterval would wait if no progress
 		// is made since current moment
-		_, ok = p2p.notifyQueue.PollTimeout( time.Duration( time.Millisecond ))
+		_, ok = p2p.notifyQueue.PollTimeout(time.Duration(time.Millisecond))
 	}
 	actual = time.Now().Sub(start)
 
@@ -502,11 +516,11 @@ func (p2p *P2PDownloader) logDownloadPeerStats() {
 	var cdnTotal int64
 	var p2pTotal int64
 
-	superNodeIP := netutils.ExtractHost( p2p.node )
+	superNodeIP := netutils.ExtractHost(p2p.node)
 
 	for peerIp, bytes := range p2p.peerTotals {
 		if peerIp == superNodeIP {
-			cdnTotal+=bytes
+			cdnTotal += bytes
 		} else {
 			p2pTotal += bytes
 		}

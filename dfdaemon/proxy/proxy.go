@@ -115,6 +115,13 @@ func WithStreamMode(streamMode bool) Option {
 	}
 }
 
+func WithNotbs(notbs bool) Option {
+	return func(p *Proxy) error {
+		p.notbs = notbs
+		return nil
+	}
+}
+
 func WithStreamDownloaderFactory(f downloader.StreamFactory) Option {
 	return func(p *Proxy) error {
 		p.streamDownloadFactory = f
@@ -149,6 +156,7 @@ func NewFromConfig(c config.Properties) (*Proxy, error) {
 			return p2p.NewClient(c.DFGetConfig())
 		}),
 		WithStreamMode(c.StreamMode),
+		WithNotbs(c.Notbs),
 	}
 
 	logrus.Infof("registry mirror: %s", c.RegistryMirror.Remote)
@@ -172,6 +180,9 @@ func NewFromConfig(c config.Properties) (*Proxy, error) {
 		logrus.Infof("use supernodes: %s", strings.Join(c.SuperNodes, ","))
 	}
 	logrus.Infof("rate limit set to %s", c.RateLimit.String())
+	if c.Notbs {
+		logrus.Infof("fallback to backsource on dfget failure is disabled")
+	}
 
 	if c.HijackHTTPS != nil {
 		opts = append(opts, WithHTTPSHosts(c.HijackHTTPS.Hosts...))
@@ -201,6 +212,7 @@ type Proxy struct {
 	downloadFactory       downloader.Factory
 	streamDownloadFactory downloader.StreamFactory
 	streamMode            bool
+	notbs                 bool
 }
 
 func (proxy *Proxy) mirrorRegistry(w http.ResponseWriter, r *http.Request) {
@@ -210,6 +222,7 @@ func (proxy *Proxy) mirrorRegistry(w http.ResponseWriter, r *http.Request) {
 		transport.WithStreamDownloader(proxy.streamDownloadFactory()),
 		transport.WithTLS(proxy.registry.TLSConfig()),
 		transport.WithCondition(proxy.shouldUseDfgetForMirror),
+		transport.WithNotbs(proxy.notbs),
 	)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to get transport: %v", err), http.StatusInternalServerError)
@@ -273,6 +286,7 @@ func (proxy *Proxy) roundTripper(tlsConfig *tls.Config) http.RoundTripper {
 		transport.WithStreamDownloader(proxy.streamDownloadFactory()),
 		transport.WithTLS(tlsConfig),
 		transport.WithCondition(proxy.shouldUseDfget),
+		transport.WithNotbs(proxy.notbs),
 	)
 	return rt
 }
