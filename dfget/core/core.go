@@ -167,7 +167,7 @@ func downloadFile(cfg *config.Config, supernodeAPI api.SupernodeAPI, locator loc
 	register regist.SupernodeRegister, result *regist.RegisterResult) error {
 	timeout := calculateTimeout(cfg)
 
-	logrus.Debugf("Download of %s is STARTED with timeout is %v", cfg.URL, timeout)
+	logrus.Infof("download STARTED timeout: %v url: %s ", timeout, cfg.URL)
 
 	success := true
 	err := doDownload(cfg, supernodeAPI, register, result, timeout)
@@ -187,11 +187,11 @@ func downloadFile(cfg *config.Config, supernodeAPI api.SupernodeAPI, locator loc
 	}
 
 	if success {
-		logrus.Infof("download SUCCESS cost:%.3fs length:%d speed:%.3fMB/s",
-			downloadTime, cfg.RV.FileLength, float64(cfg.RV.FileLength)/downloadTime/1024/1024)
+		logrus.Infof("download SUCCESS cost:%.3fs length:%d speed:%.3fMB/s url: %s",
+			downloadTime, cfg.RV.FileLength, float64(cfg.RV.FileLength)/downloadTime/1024/1024, cfg.URL)
 	} else {
-		logrus.Infof("download FAIL cost:%.3fs length:%d reason:%d error:%v",
-			time.Since(cfg.StartTime).Seconds(), cfg.RV.FileLength, cfg.BackSourceReason, err)
+		logrus.Infof("download FAIL cost:%.3fs length:%d reason:%d error:%v url: ",
+			time.Since(cfg.StartTime).Seconds(), cfg.RV.FileLength, cfg.BackSourceReason, err, cfg.URL)
 	}
 	return err
 }
