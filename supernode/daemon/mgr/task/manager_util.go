@@ -44,9 +44,12 @@ func (tm *Manager) addOrUpdateTask(ctx context.Context, req *types.TaskCreateReq
 		taskURL = netutils.FilterURLParam(req.RawURL, req.Filter)
 	}
 	taskID := generateTaskID(taskURL, req.Md5, req.Identifier, req.Headers)
+	logrus.Debugf("generated task id %s", taskID)
 
 	util.GetLock(taskID, true)
 	defer util.ReleaseLock(taskID, true)
+
+	logrus.Debugf("got lock %s", taskID)
 
 	if key, err := tm.taskURLUnReachableStore.Get(taskID); err == nil {
 		if unReachableStartTime, ok := key.(time.Time); ok &&
@@ -79,6 +82,8 @@ func (tm *Manager) addOrUpdateTask(ctx context.Context, req *types.TaskCreateReq
 		task = newTask
 	}
 
+	logrus.Debugf("got from taskstore %s", taskID)
+
 	if task.HTTPFileLength != 0 {
 		return task, nil
 	}
@@ -96,12 +101,14 @@ func (tm *Manager) addOrUpdateTask(ctx context.Context, req *types.TaskCreateReq
 			return nil, err
 		}
 	}
+	logrus.Debugf("got filelength %s: %v", taskID, fileLength)
 	if tm.cfg.CDNPattern == config.CDNPatternSource {
 		if fileLength <= 0 {
 			return nil, fmt.Errorf("failed to get file length and it is required in source CDN pattern")
 		}
 
 		supportRange, err := tm.originClient.IsSupportRange(task.TaskURL, task.Headers)
+		logrus.Debugf("got supportRange %s: %v", taskID, supportRange)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to check whether the task(%s) supports partial requests", task.ID)
 		}
