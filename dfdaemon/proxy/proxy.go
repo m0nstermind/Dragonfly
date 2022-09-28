@@ -211,6 +211,7 @@ type Proxy struct {
 	// downloadFactory returns the downloader used for p2p downloading
 	downloadFactory       downloader.Factory
 	streamDownloadFactory downloader.StreamFactory
+	downloadMutex         sync.Mutex
 	streamMode            bool
 	notbs                 bool
 }
@@ -223,6 +224,7 @@ func (proxy *Proxy) mirrorRegistry(w http.ResponseWriter, r *http.Request) {
 		transport.WithTLS(proxy.registry.TLSConfig()),
 		transport.WithCondition(proxy.shouldUseDfgetForMirror),
 		transport.WithNotbs(proxy.notbs),
+		transport.WithMutex(&proxy.downloadMutex),
 	)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to get transport: %v", err), http.StatusInternalServerError)

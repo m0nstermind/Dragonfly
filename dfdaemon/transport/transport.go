@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/pborman/uuid"
@@ -45,6 +46,7 @@ var (
 type DFRoundTripper struct {
 	Round            *http.Transport
 	Round2           http.RoundTripper
+	downloadMutex    *sync.Mutex
 	ShouldUseDfget   func(req *http.Request) bool
 	Downloader       downloader.Interface
 	StreamDownloader downloader.Stream
@@ -130,6 +132,13 @@ func WithNotbs(notbs bool) Option {
 	}
 }
 
+func WithMutex(m *sync.Mutex) Option {
+	return func(rt *DFRoundTripper) error {
+		rt.downloadMutex = m
+		return nil
+	}
+}
+
 // WithCondition configures how to decide whether to use dfget or not.
 func WithCondition(c func(r *http.Request) bool) Option {
 	return func(rt *DFRoundTripper) error {
@@ -164,6 +173,14 @@ func (roundTripper *DFRoundTripper) RoundTrip(req *http.Request) (*http.Response
 
 // download uses dfget to download.
 func (roundTripper *DFRoundTripper) download(req *http.Request, urlString string) (*http.Response, error) {
+	// limit downloads to no more than 1 at a time
+	if !roundTripper.downloadMutex.TryLock() {
+		logrus.Debugf("Waiting for concurrent downloads to finish")
+		roundTripper.downloadMutex.Lock()
+		logrus.Debugf("... concurrent downloads finished. proceding to download")
+	}
+	defer roundTripper.downloadMutex.Unlock()
+
 	if roundTripper.streamMode {
 		return roundTripper.downloadByStream(req.Context(), urlString, req.Header, uuid.New())
 	}
@@ -197,7 +214,7 @@ func (roundTripper *DFRoundTripper) downloadByGetter(ctx context.Context, url st
 }
 
 func (roundTripper *DFRoundTripper) downloadByStream(ctx context.Context, url string, header map[string][]string, name string) (*http.Response, error) {
-	logrus.Infof("start download url:%s to %s in repo", url, name)
+	logrus.Infof("start stream download url:%s to %s in repo", url, name)
 	reader, err := roundTripper.StreamDownloader.DownloadStreamContext(ctx, url, header, name)
 	if err != nil {
 		logrus.Errorf("download fail: %v", err)
