@@ -15,6 +15,9 @@ registry_mirror:
 # are provided, all requests will be proxied directly. Request will be
 # proxied with the first matching rule.
 proxies:
+  # download dragonfly related images without dragonfly
+  - regx: dragonfly-supernode
+    direct: true
   # proxy all http image layer download requests with dfget
   - regx: blobs/sha256.*
       # change http requests to some-registry to https and proxy them with dfget
