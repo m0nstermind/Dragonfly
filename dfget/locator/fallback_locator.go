@@ -121,6 +121,9 @@ func (s *FallbackLocator) Next() *Supernode {
 // It should not affect the result of method 'Get()'.
 func (s *FallbackLocator) Select(key interface{}) *Supernode {
 	supernode := s.Get()
+	if supernode == nil {
+		return nil
+	}
 
 	hosts, err := net.LookupHost(supernode.IP)
 	if err != nil {
