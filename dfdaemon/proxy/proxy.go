@@ -303,6 +303,7 @@ func (proxy *Proxy) shouldUseDfget(req *http.Request) bool {
 
 	for _, rule := range proxy.rules {
 		if rule.Match(req.URL.String()) {
+			logrus.Debugf("matched rule: %s on %s", rule.Regx.String(), req.URL.String())
 			if rule.UseHTTPS {
 				req.URL.Scheme = "https"
 			}
@@ -319,7 +320,7 @@ func (proxy *Proxy) shouldUseDfget(req *http.Request) bool {
 // shouldUseDfgetForMirror returns whether we should use dfget to proxy a request
 // when we use registry mirror.
 func (proxy *Proxy) shouldUseDfgetForMirror(req *http.Request) bool {
-	return proxy.registry != nil && !proxy.registry.Direct && transport.NeedUseGetter(req)
+	return proxy.registry != nil && !proxy.registry.Direct && transport.CanUseGetter(req) && proxy.shouldUseDfget(req)
 }
 
 // tunnelHTTPS handles a CONNECT request and proxy an https request through an

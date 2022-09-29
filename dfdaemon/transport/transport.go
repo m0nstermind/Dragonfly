@@ -23,7 +23,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"regexp"
 	"sync"
 	"time"
 
@@ -33,11 +32,6 @@ import (
 
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/downloader"
 	"github.com/dragonflyoss/Dragonfly/dfdaemon/exception"
-)
-
-var (
-	// layerReg the regex to determine if it is an image download
-	layerReg = regexp.MustCompile("^.+/blobs/sha256.*$")
 )
 
 // DFRoundTripper implements RoundTripper for dfget.
@@ -59,7 +53,7 @@ func New(opts ...Option) (*DFRoundTripper, error) {
 	rt := &DFRoundTripper{
 		Round:          defaultHTTPTransport(nil),
 		Round2:         http.NewFileTransport(http.Dir("/")),
-		ShouldUseDfget: NeedUseGetter,
+		ShouldUseDfget: CanUseGetter,
 	}
 
 	for _, opt := range opts {
@@ -228,8 +222,7 @@ func (roundTripper *DFRoundTripper) downloadByStream(ctx context.Context, url st
 	return resp, nil
 }
 
-// needUseGetter is the default value for ShouldUseDfget, which downloads all
-// images layers with dfget.
-func NeedUseGetter(req *http.Request) bool {
-	return req.Method == http.MethodGet && layerReg.MatchString(req.URL.Path)
+// can dfget be used for the request
+func CanUseGetter(req *http.Request) bool {
+	return req.Method == http.MethodGet
 }
