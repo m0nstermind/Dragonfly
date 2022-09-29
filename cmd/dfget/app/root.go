@@ -162,12 +162,18 @@ func initProperties() ([]*propertiesResult, error) {
 		cfg.ClientQueueSize = properties.ClientQueueSize
 	}
 
-	if cfg.Timeout == 0 && properties.TimeoutStr != "" {
-		duration, err := time.ParseDuration(properties.TimeoutStr)
-		if err == nil {
-			cfg.Timeout = duration
+	if properties.DeadlineStr != "" {
+		// Parse deadline with java compatible ISO8601 format
+		if deadline, err := time.Parse("2006-01-02T15:04:05-0700", properties.DeadlineStr); err == nil {
+			cfg.Timeout = time.Until(deadline)
+			logrus.Debugf("deadline parsed: %s, timeout is %s", deadline, cfg.Timeout)
+			if cfg.Timeout < 0 {
+				cfg.Timeout = time.Millisecond
+			}
+			cfg.DeadlineStr = properties.DeadlineStr
+		} else {
+			cfg.DeadlineStr = fmt.Sprintf("Cannot parse deadline %s: %s", properties.DeadlineStr, err)
 		}
-		cfg.TimeoutStr = properties.TimeoutStr
 	}
 
 	cfg.LogConfig = properties.LogConfig

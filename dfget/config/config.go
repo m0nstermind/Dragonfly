@@ -20,13 +20,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/user"
-	"path/filepath"
-	"strings"
-	"syscall"
-	"time"
-
 	"github.com/dragonflyoss/Dragonfly/pkg/dflog"
 	"github.com/dragonflyoss/Dragonfly/pkg/errortypes"
 	"github.com/dragonflyoss/Dragonfly/pkg/fileutils"
@@ -34,10 +27,14 @@ import (
 	"github.com/dragonflyoss/Dragonfly/pkg/printer"
 	"github.com/dragonflyoss/Dragonfly/pkg/rate"
 	"github.com/dragonflyoss/Dragonfly/pkg/stringutils"
+	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
+	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
-	"gopkg.in/gcfg.v1"
-	"gopkg.in/warnings.v0"
 )
 
 // ----------------------------------------------------------------------------
@@ -85,8 +82,8 @@ type Properties struct {
 	// WorkHome work home path,
 	// default: `$HOME/.small-dragonfly`.
 	WorkHome string `yaml:"workHome" json:"workHome,omitempty"`
-	// Timeout download timeout string
-	TimeoutStr string `yaml:"timeout" json:"timeout"`
+	// Download deadline string RFC3339
+	DeadlineStr string `yaml:"deadline" json:"deadline"`
 
 	LogConfig dflog.LogConfig `yaml:"logConfig" json:"logConfig"`
 }
@@ -110,42 +107,15 @@ func (p *Properties) String() string {
 // Load loads properties from config file.
 func (p *Properties) Load(path string) error {
 	switch p.fileType(path) {
-	case "ini":
-		return p.loadFromIni(path)
 	case "yaml":
 		return fileutils.LoadYaml(path, p)
 	}
 	return fmt.Errorf("extension of %s is not in 'conf/ini/yaml/yml'", path)
 }
 
-// loadFromIni to be compatible with previous versions(before 0.2.0).
-func (p *Properties) loadFromIni(path string) error {
-	oldConfig := struct {
-		Node struct {
-			Address string
-		}
-	}{}
-
-	if err := gcfg.ReadFileInto(&oldConfig, path); err != nil {
-		// only fail on a fatal error occurred
-		if e, ok := err.(warnings.List); !ok || e.Fatal != nil {
-			return fmt.Errorf("read ini config from %s error: %v", path, err)
-		}
-	}
-
-	nodes, err := ParseNodesString(oldConfig.Node.Address)
-	if err != nil {
-		return errors.Wrapf(err, "failed to handle nodes")
-	}
-	p.Supernodes = nodes
-	return err
-}
-
 func (p *Properties) fileType(path string) string {
 	ext := filepath.Ext(path)
 	switch v := strings.ToLower(ext); v {
-	case ".conf", ".ini":
-		return "ini"
 	case ".yaml", ".yml":
 		return "yaml"
 	default:
@@ -241,7 +211,7 @@ type Config struct {
 	BackSourceReason int `json:"-"`
 
 	// Timeout download timeout
-	Timeout time.Duration `json:"-"`
+	Timeout time.Duration `json:"timeout"`
 
 	// Embedded Properties holds all configurable properties.
 	Properties
@@ -324,7 +294,7 @@ func checkOutput(cfg *Config) error {
 // at downloading task executing.
 type RuntimeVariable struct {
 	// MetaPath specify the path of meta file which store the meta info of the peer that should be persisted.
-	// Only server port information is stored currently.
+	// Only server port information is stored currently.
 	MetaPath string
 
 	// SystemDataDir specifies a default directory to store temporary files.
