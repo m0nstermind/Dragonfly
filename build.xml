@@ -82,7 +82,13 @@
 	<property name="rpm.name" value="dragonfly-daemon"/>
 	<property name="rpm.file.name" value="${rpm.name}-${build.number.str}.el7.x86_64.rpm"/>
 	<property name="rpm.file" value="${root.dir}/release/${rpm.file.name}"/>
+	<property name="build.tmp.rpm" value="${build.tmp}/rpm" />
 
+	<property environment="env"/>
+
+	<condition property="rpm.deploy.enabled">
+		<isset property="env.RPM_GPG_PRIVATE_KEY" />
+	</condition>
 
 	<!-- override git clone to not use shared references - they will not work under docker -->
     <macrodef name="git-clone">
@@ -164,9 +170,9 @@
 		</antcall>
 	</target>
 
-    <target name="ivy-prepare-for-publish" if="ivy.enabled">
-    	<move file="${rpm.file}" todir="${build.components}"/>
-    </target>
+	<target name="ivy-prepare-for-publish" if="ivy.enabled">
+		<copy file="${rpm.file}" todir="${build.components}"/>
+	</target>
 
 	<!-- overwritten here to avoid creation of /one/image dir - supernode is not java app -->
 	<target name="docker-prepare" depends="docker-init" if="docker.enabled" >
@@ -222,46 +228,28 @@
     </target>
     -->
 
-	<!-- upload rpm to nexus for rpm_sign_and_deploy Ansible job -->
-	<target name="upload-rpm-to-nexus" depends="init-http-task" if="nexus.repository.rpm">
-		<property name="rpm.url" value="${nexus.url}/repository/${nexus.repository.rpm}/${rpm.name}/${rpm.file.name}"/>
-		<http method="PUT" printresponse="true" expected="201" url="${rpm.url}">
-			<credentials username="${nexus.username}" password="${nexus.password}" />
-			<entity file="${build.components}/${rpm.file.name}" binary="true" />
-        </http>
-	</target>
-
-	<!-- serialize extra vars to json string -->
-	<target name="prepare-extra-vars" if="rpm.url">
-		<script language="javascript"><![CDATA[
-			var rpmFileName = project.getProperty("rpm.file.name");
-			var rpmUrl = project.getProperty("rpm.url");
-			var extraVars = {
-				"pkg_name": rpmFileName, 
-				"nexus_url": rpmUrl, 
-				"user_name": "builder", 
-				"os_version": "7", 
-				"repo_name": "local"
-			}
-			project.setProperty("awx.runner.extra.vars", JSON.stringify(extraVars));
-		]]></script>
+	<target name="rpm-prepare-for-signing" if="rpm.deploy.enabled">
+		<mkdir dir="${build.tmp.rpm}"/>
+		<copy file="${rpm.file}" todir="${build.tmp.rpm}"/>
 	</target>
 
 	<!-- 
-		runs Ansible job rpm_sign_and_deploy using AWX tasks runner
-		job takes nexus rpm url from extra vars
+		runs deploy tool from python-build-tools
+		https://stash.odkl.ru/projects/ADMIN/repos/python-build-tools/browse/src/python_build_tools/scripts/deploy.py
 	-->
-	<target name="publish-rpm" depends="upload-rpm-to-nexus,prepare-extra-vars" if="rpm.deploy.template.id">
-		<echo>Running AWX task using template ${rpm.deploy.template.id} with extra vars ${awx.runner.extra.vars}</echo>
-		<exec executable="awx-tasks-runner" failonerror="true">
-            <arg value="--awx_user"/>
-            <arg value="${awx.user}"/>
-            <arg value="--awx_password"/>
-            <arg value="${awx.password}"/>
-            <arg value="--template_id"/>
-            <arg value="${rpm.deploy.template.id}"/>
-            <arg value="--extra_vars"/>
-            <arg value="${awx.runner.extra.vars}"/>
+	<target name="deploy-rpm" depends="rpm-prepare-for-signing" if="rpm.deploy.enabled">
+		<property name="rpm.deploy.executable" value="deploy"/>
+
+		<echo>Running deploy tool with project path ${build.tmp.rpm} for ${rpm.name} ${build.number.str}</echo>
+		<exec executable="${rpm.deploy.executable}" failonerror="true">
+            <arg value="--project_path"/>
+            <arg value="${build.tmp.rpm}"/>
+            <arg value="--username"/>
+            <arg value="${triggered.by.user}"/>
+			<env key="GIT_PROJECT_NAME" value="${rpm.name}"/>
+			<env key="VERSION" value="${build.number.str}"/>
+			<env key="RPM_DEPLOY_OS_DISTRIB" value="centos7"/>
+			<env key="RPM_DEPLOY_REPO" value="local"/>
         </exec>
 	</target>
 
@@ -275,7 +263,7 @@
 			<param name="docker.tag" value="${build.number.str}"/>
 		</antcall>
 
-		<antcall target="publish-rpm"/>
+		<antcall target="deploy-rpm"/>
 
 	</target>
 
